@@ -12,40 +12,6 @@ const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'sqladmin123';
 const QUESTIONS_FILE = path.join(__dirname, 'questions.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// On Vercel, the deployed filesystem is read-only.
-// We use /tmp (which IS writable on Vercel) as a persistent fallback.
-const IS_VERCEL = !!process.env.VERCEL;
-const USERS_TMP_FILE = IS_VERCEL ? path.join('/tmp', 'users.json') : null;
-
-// In-memory user store, loaded once at cold start
-let usersCache = null;
-function ensureUsersCache() {
-  if (usersCache !== null) return;
-  // On Vercel, try /tmp first (survives warm invocations), then fall back to bundled file
-  if (IS_VERCEL && USERS_TMP_FILE) {
-    try {
-      if (fs.existsSync(USERS_TMP_FILE)) {
-        usersCache = JSON.parse(fs.readFileSync(USERS_TMP_FILE, 'utf-8'));
-        console.log('[Vercel] Loaded users from /tmp cache.');
-        return;
-      }
-    } catch (e) {
-      console.warn('[Vercel] Failed to read /tmp users cache:', e.message);
-    }
-  }
-  // Fallback: read from bundled users.json
-  try {
-    if (fs.existsSync(USERS_FILE)) {
-      usersCache = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-    } else {
-      usersCache = [];
-    }
-  } catch (error) {
-    console.error('Error reading users file:', error);
-    usersCache = [];
-  }
-}
-
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -83,25 +49,22 @@ function writeQuestions(data) {
 }
 
 function readUsers() {
-  ensureUsersCache();
-  // Return a deep copy to prevent accidental mutation
-  return JSON.parse(JSON.stringify(usersCache));
+  try {
+    if (!fs.existsSync(USERS_FILE)) return [];
+    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+  } catch (error) {
+    console.error('Error reading users:', error);
+    return [];
+  }
 }
 
 function writeUsers(data) {
-  // Always update in-memory cache
-  usersCache = data;
-
-  // Persist to /tmp on Vercel (writable) or to users.json locally
-  const targetFile = IS_VERCEL ? USERS_TMP_FILE : USERS_FILE;
   try {
-    fs.writeFileSync(targetFile, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     return true;
   } catch (error) {
-    console.error('Error writing users to', targetFile, ':', error);
-    // Even if disk write fails, the in-memory cache is updated so
-    // progress is retained for the lifetime of this serverless invocation
-    return IS_VERCEL ? true : false;
+    console.error('Error writing users:', error);
+    return false;
   }
 }
 

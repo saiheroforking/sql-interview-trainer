@@ -2,36 +2,18 @@
 // SQL INTERVIEW TRAINER - CORE FRONTEND ENGINE WITH LANDING PAGE & BLUR REVEALS
 // ==========================================================================
 
-// Per-user localStorage key helpers
-function getUserStorageKey(key) {
-  const user = localStorage.getItem('user_name');
-  return user ? `sql_${key}_${user.toLowerCase()}` : `sql_${key}`;
-}
+// Global state
+const savedUsernameOnLoad = localStorage.getItem('user_name');
+const initialSuffixOnLoad = savedUsernameOnLoad ? `_${savedUsernameOnLoad.toLowerCase()}` : '';
 
-function loadUserProgress() {
-  return {
-    bookmarks: JSON.parse(localStorage.getItem(getUserStorageKey('bookmarks'))) || [],
-    mastered: JSON.parse(localStorage.getItem(getUserStorageKey('mastered'))) || [],
-    review: JSON.parse(localStorage.getItem(getUserStorageKey('review'))) || []
-  };
-}
-
-function saveUserProgress() {
-  localStorage.setItem(getUserStorageKey('bookmarks'), JSON.stringify(state.bookmarks));
-  localStorage.setItem(getUserStorageKey('mastered'), JSON.stringify(state.mastered));
-  localStorage.setItem(getUserStorageKey('review'), JSON.stringify(state.review));
-}
-
-// Global state - progress loaded from per-user localStorage keys
-const _initProgress = loadUserProgress();
 let state = {
   questions: [],
   filteredQuestions: [],
   currentPage: 1,
   pageSize: 20,
-  bookmarks: _initProgress.bookmarks,
-  mastered: _initProgress.mastered,
-  review: _initProgress.review,
+  bookmarks: JSON.parse(localStorage.getItem(`sql_bookmarks${initialSuffixOnLoad}`)) || JSON.parse(localStorage.getItem('sql_bookmarks')) || [],
+  mastered: JSON.parse(localStorage.getItem(`sql_mastered${initialSuffixOnLoad}`)) || JSON.parse(localStorage.getItem('sql_mastered')) || [],
+  review: JSON.parse(localStorage.getItem(`sql_review${initialSuffixOnLoad}`)) || JSON.parse(localStorage.getItem('sql_review')) || [],
   token: localStorage.getItem('admin_token') || null, // Stores JWT token
   username: localStorage.getItem('user_name') || null,
   role: localStorage.getItem('user_role') || 'guest', // 'guest', 'user', 'admin'
@@ -840,6 +822,19 @@ function toggleCard(id) {
 // ----------------------------------------------------
 // BOOKMARKS, MASTERY & CLOUD SYNC
 // ----------------------------------------------------
+function saveLocalProgress() {
+  localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
+  localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
+  localStorage.setItem('sql_review', JSON.stringify(state.review));
+
+  if (state.username && state.role !== 'guest') {
+    const keySuffix = `_${state.username.toLowerCase()}`;
+    localStorage.setItem(`sql_bookmarks${keySuffix}`, JSON.stringify(state.bookmarks));
+    localStorage.setItem(`sql_mastered${keySuffix}`, JSON.stringify(state.mastered));
+    localStorage.setItem(`sql_review${keySuffix}`, JSON.stringify(state.review));
+  }
+}
+
 function toggleBookmark(id, btnElement) {
   const idx = state.bookmarks.indexOf(id);
   if (idx > -1) {
@@ -851,7 +846,7 @@ function toggleBookmark(id, btnElement) {
     btnElement.classList.add('bookmarked');
     showToast(`Question #${id} added to bookmarks.`, 'success');
   }
-  saveUserProgress();
+  saveLocalProgress();
   updateProgressUI();
   triggerProgressUpload();
 }
@@ -874,7 +869,7 @@ function toggleMastered(id, btnElement) {
     }
     showToast(`Question #${id} marked as Mastered!`, 'success');
   }
-  saveUserProgress();
+  saveLocalProgress();
   updateProgressUI();
   triggerProgressUpload();
 }
@@ -897,7 +892,7 @@ function toggleReview(id, btnElement) {
     }
     showToast(`Question #${id} marked for review.`, 'warning');
   }
-  saveUserProgress();
+  saveLocalProgress();
   updateProgressUI();
   triggerProgressUpload();
 }
@@ -973,9 +968,10 @@ async function syncCloudProgress() {
       state.mastered = mergedMastered;
       state.review = mergedReview;
 
-      saveUserProgress();
+      saveLocalProgress();
 
       updateProgressUI();
+      applyFilters(); // Ensure UI question cards refresh with solved/mastered status
       triggerProgressUpload();
 
       if (syncIndicator) {
@@ -1422,13 +1418,14 @@ function runSandboxQuery() {
         if (isCorrect) {
           if (!state.mastered.includes(state.activeQuestionID)) {
             state.mastered.push(state.activeQuestionID);
+            
             // Remove from review
             const revIdx = state.review.indexOf(state.activeQuestionID);
             if (revIdx > -1) {
               state.review.splice(revIdx, 1);
             }
-            saveUserProgress();
             
+            saveLocalProgress();
             updateProgressUI();
             triggerProgressUpload();
             applyFilters(); // Re-render card checkmarks in Trainer Q&A tab
@@ -1600,7 +1597,7 @@ function removeBookmarkFromAnalytics(id) {
   const idx = state.bookmarks.indexOf(id);
   if (idx > -1) {
     state.bookmarks.splice(idx, 1);
-    saveUserProgress();
+    saveLocalProgress();
     renderAnalytics();
     updateProgressUI();
     triggerProgressUpload();
@@ -1710,21 +1707,24 @@ function loginSuccess(data) {
   localStorage.setItem('user_name', data.username);
   localStorage.setItem('user_role', data.role);
 
-  // Restore progress from per-user localStorage keys first
-  const localProgress = loadUserProgress();
-  state.bookmarks = localProgress.bookmarks;
-  state.mastered = localProgress.mastered;
-  state.review = localProgress.review;
+  // Load username-specific progress from localStorage if it exists
+  const keySuffix = `_${data.username.toLowerCase()}`;
+  const localBookmarks = JSON.parse(localStorage.getItem(`sql_bookmarks${keySuffix}`)) || [];
+  const localMastered = JSON.parse(localStorage.getItem(`sql_mastered${keySuffix}`)) || [];
+  const localReview = JSON.parse(localStorage.getItem(`sql_review${keySuffix}`)) || [];
 
   if (data.progress) {
-    // Merge server progress with restored local progress
-    state.bookmarks = [...new Set([...state.bookmarks, ...(data.progress.bookmarks || [])])];
-    state.mastered = [...new Set([...state.mastered, ...(data.progress.mastered || [])])];
-    state.review = [...new Set([...state.review, ...(data.progress.review || [])])];
+    // Merge server progress with local progress so local offline work is not wiped out
+    state.bookmarks = [...new Set([...localBookmarks, ...state.bookmarks, ...(data.progress.bookmarks || [])])];
+    state.mastered = [...new Set([...localMastered, ...state.mastered, ...(data.progress.mastered || [])])];
+    state.review = [...new Set([...localReview, ...state.review, ...(data.progress.review || [])])];
+  } else {
+    state.bookmarks = [...new Set([...localBookmarks, ...state.bookmarks])];
+    state.mastered = [...new Set([...localMastered, ...state.mastered])];
+    state.review = [...new Set([...localReview, ...state.review])];
   }
 
-  // Save merged progress back to per-user localStorage keys
-  saveUserProgress();
+  saveLocalProgress();
 
   showToast(`Welcome back, ${data.username}! Access granted.`, 'success');
   
@@ -1739,11 +1739,6 @@ function loginSuccess(data) {
 // CORE ACCOUNT CENTER AUTH ACTIONS (LOGOUT & MANUAL SYNC)
 // ----------------------------------------------------
 window.logoutUserAction = function(showMsg = true, clearProgress = true) {
-  // Save progress to per-user localStorage BEFORE clearing username
-  saveUserProgress();
-  // Also upload to server before logging out
-  triggerProgressUpload();
-
   state.token = null;
   state.username = null;
   state.role = 'guest';
@@ -1753,10 +1748,15 @@ window.logoutUserAction = function(showMsg = true, clearProgress = true) {
   localStorage.removeItem('user_name');
   localStorage.removeItem('user_role');
   
-  // Clear in-memory progress (but per-user localStorage keys are preserved)
-  state.bookmarks = [];
-  state.mastered = [];
-  state.review = [];
+  if (clearProgress) {
+    // Reset local progress
+    state.bookmarks = [];
+    state.mastered = [];
+    state.review = [];
+    localStorage.removeItem('sql_bookmarks');
+    localStorage.removeItem('sql_mastered');
+    localStorage.removeItem('sql_review');
+  }
 
   toggleWorkspaceView(false);
   updateAuthView(false);
