@@ -2,15 +2,36 @@
 // SQL INTERVIEW TRAINER - CORE FRONTEND ENGINE WITH LANDING PAGE & BLUR REVEALS
 // ==========================================================================
 
-// Global state
+// Per-user localStorage key helpers
+function getUserStorageKey(key) {
+  const user = localStorage.getItem('user_name');
+  return user ? `sql_${key}_${user.toLowerCase()}` : `sql_${key}`;
+}
+
+function loadUserProgress() {
+  return {
+    bookmarks: JSON.parse(localStorage.getItem(getUserStorageKey('bookmarks'))) || [],
+    mastered: JSON.parse(localStorage.getItem(getUserStorageKey('mastered'))) || [],
+    review: JSON.parse(localStorage.getItem(getUserStorageKey('review'))) || []
+  };
+}
+
+function saveUserProgress() {
+  localStorage.setItem(getUserStorageKey('bookmarks'), JSON.stringify(state.bookmarks));
+  localStorage.setItem(getUserStorageKey('mastered'), JSON.stringify(state.mastered));
+  localStorage.setItem(getUserStorageKey('review'), JSON.stringify(state.review));
+}
+
+// Global state - progress loaded from per-user localStorage keys
+const _initProgress = loadUserProgress();
 let state = {
   questions: [],
   filteredQuestions: [],
   currentPage: 1,
   pageSize: 20,
-  bookmarks: JSON.parse(localStorage.getItem('sql_bookmarks')) || [],
-  mastered: JSON.parse(localStorage.getItem('sql_mastered')) || [],
-  review: JSON.parse(localStorage.getItem('sql_review')) || [],
+  bookmarks: _initProgress.bookmarks,
+  mastered: _initProgress.mastered,
+  review: _initProgress.review,
   token: localStorage.getItem('admin_token') || null, // Stores JWT token
   username: localStorage.getItem('user_name') || null,
   role: localStorage.getItem('user_role') || 'guest', // 'guest', 'user', 'admin'
@@ -830,7 +851,7 @@ function toggleBookmark(id, btnElement) {
     btnElement.classList.add('bookmarked');
     showToast(`Question #${id} added to bookmarks.`, 'success');
   }
-  localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
+  saveUserProgress();
   updateProgressUI();
   triggerProgressUpload();
 }
@@ -853,8 +874,7 @@ function toggleMastered(id, btnElement) {
     }
     showToast(`Question #${id} marked as Mastered!`, 'success');
   }
-  localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
-  localStorage.setItem('sql_review', JSON.stringify(state.review));
+  saveUserProgress();
   updateProgressUI();
   triggerProgressUpload();
 }
@@ -877,8 +897,7 @@ function toggleReview(id, btnElement) {
     }
     showToast(`Question #${id} marked for review.`, 'warning');
   }
-  localStorage.setItem('sql_review', JSON.stringify(state.review));
-  localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
+  saveUserProgress();
   updateProgressUI();
   triggerProgressUpload();
 }
@@ -954,9 +973,7 @@ async function syncCloudProgress() {
       state.mastered = mergedMastered;
       state.review = mergedReview;
 
-      localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
-      localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
-      localStorage.setItem('sql_review', JSON.stringify(state.review));
+      saveUserProgress();
 
       updateProgressUI();
       triggerProgressUpload();
@@ -1405,14 +1422,12 @@ function runSandboxQuery() {
         if (isCorrect) {
           if (!state.mastered.includes(state.activeQuestionID)) {
             state.mastered.push(state.activeQuestionID);
-            localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
-            
             // Remove from review
             const revIdx = state.review.indexOf(state.activeQuestionID);
             if (revIdx > -1) {
               state.review.splice(revIdx, 1);
-              localStorage.setItem('sql_review', JSON.stringify(state.review));
             }
+            saveUserProgress();
             
             updateProgressUI();
             triggerProgressUpload();
@@ -1585,7 +1600,7 @@ function removeBookmarkFromAnalytics(id) {
   const idx = state.bookmarks.indexOf(id);
   if (idx > -1) {
     state.bookmarks.splice(idx, 1);
-    localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
+    saveUserProgress();
     renderAnalytics();
     updateProgressUI();
     triggerProgressUpload();
@@ -1695,16 +1710,21 @@ function loginSuccess(data) {
   localStorage.setItem('user_name', data.username);
   localStorage.setItem('user_role', data.role);
 
+  // Restore progress from per-user localStorage keys first
+  const localProgress = loadUserProgress();
+  state.bookmarks = localProgress.bookmarks;
+  state.mastered = localProgress.mastered;
+  state.review = localProgress.review;
+
   if (data.progress) {
-    // Merge server progress with local progress so local offline work is not wiped out
+    // Merge server progress with restored local progress
     state.bookmarks = [...new Set([...state.bookmarks, ...(data.progress.bookmarks || [])])];
     state.mastered = [...new Set([...state.mastered, ...(data.progress.mastered || [])])];
     state.review = [...new Set([...state.review, ...(data.progress.review || [])])];
-    
-    localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
-    localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
-    localStorage.setItem('sql_review', JSON.stringify(state.review));
   }
+
+  // Save merged progress back to per-user localStorage keys
+  saveUserProgress();
 
   showToast(`Welcome back, ${data.username}! Access granted.`, 'success');
   
@@ -1719,6 +1739,11 @@ function loginSuccess(data) {
 // CORE ACCOUNT CENTER AUTH ACTIONS (LOGOUT & MANUAL SYNC)
 // ----------------------------------------------------
 window.logoutUserAction = function(showMsg = true, clearProgress = true) {
+  // Save progress to per-user localStorage BEFORE clearing username
+  saveUserProgress();
+  // Also upload to server before logging out
+  triggerProgressUpload();
+
   state.token = null;
   state.username = null;
   state.role = 'guest';
@@ -1728,15 +1753,10 @@ window.logoutUserAction = function(showMsg = true, clearProgress = true) {
   localStorage.removeItem('user_name');
   localStorage.removeItem('user_role');
   
-  if (clearProgress) {
-    // Reset local progress
-    state.bookmarks = [];
-    state.mastered = [];
-    state.review = [];
-    localStorage.removeItem('sql_bookmarks');
-    localStorage.removeItem('sql_mastered');
-    localStorage.removeItem('sql_review');
-  }
+  // Clear in-memory progress (but per-user localStorage keys are preserved)
+  state.bookmarks = [];
+  state.mastered = [];
+  state.review = [];
 
   toggleWorkspaceView(false);
   updateAuthView(false);
