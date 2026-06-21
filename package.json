@@ -1,0 +1,14 @@
+{
+  "name": "sql-interview-trainer",
+  "version": "1.0.0",
+  "description": "SQL Interview Training Platform with an Interactive WASM SQLite Playground and Admin Console.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

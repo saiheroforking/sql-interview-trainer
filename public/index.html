@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Interview Master - 500 Questions Challenge</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- SQL.js for In-Browser Database -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+
+  <!-- LANDING / INTRO HOME PAGE (For Guest Users) -->
+  <div id="landing-page" class="landing-page">
+    <div class="landing-background">
+      <div class="glow-orb orb-1"></div>
+      <div class="glow-orb orb-2"></div>
+    </div>
+    
+    <header class="landing-header">
+      <div class="logo">
+        <i class="fa-solid fa-database text-gradient"></i>
+        <span>SQL<span class="text-accent">Master</span></span>
+      </div>
+      <span class="version-lbl">v1.1 Stable</span>
+    </header>
+
+    <main class="landing-main">
+      <div class="landing-hero-section">
+        <h1 class="hero-title">Crack Your <br><span class="text-gradient">SQL Interview</span></h1>
+        <p class="hero-desc">Master database querying with our structured catalog of 500 hand-picked SQL interview questions, fully interactive WebAssembly database console, and cloud progress tracking.</p>
+        
+        <div class="features-mini-grid">
+          <div class="mini-feat-card">
+            <i class="fa-solid fa-graduation-cap text-accent"></i>
+            <div>
+              <h4>500 SQL Puzzles</h4>
+              <p>Joins, subqueries, CTEs, window functions, views, and triggers.</p>
+            </div>
+          </div>
+          <div class="mini-feat-card">
+            <i class="fa-solid fa-terminal text-accent"></i>
+            <div>
+              <h4>Interactive SQLite Console</h4>
+              <p>Run your queries live inside the browser using WebAssembly.</p>
+            </div>
+          </div>
+          <div class="mini-feat-card">
+            <i class="fa-solid fa-chart-line text-accent"></i>
+            <div>
+              <h4>Progress Tracker</h4>
+              <p>Track your stats, flag reviews, and sync bookmarks to the cloud.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Landing Page Login / Signup Card -->
+      <div class="landing-auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="landing-tab-login">Log In</button>
+          <button class="auth-tab-btn" id="landing-tab-signup">Register</button>
+        </div>
+        
+        <!-- Login View -->
+        <div class="auth-view" id="landing-login-view">
+          <h3>Welcome Back</h3>
+          <p>Login to resume your SQL training profile.</p>
+          
+          <form id="landing-login-form">
+            <div class="form-group-custom">
+              <label for="l-username">Username</label>
+              <div class="input-wrapper-icon">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="l-username" placeholder="Enter username" required>
+              </div>
+            </div>
+            
+            <div class="form-group-custom">
+              <label for="l-password">Password</label>
+              <div class="input-wrapper-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="l-password" placeholder="Enter password" required>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">Log In</button>
+            <p class="error-text hidden" id="l-error-msg">Incorrect credentials.</p>
+          </form>
+        </div>
+
+        <!-- Signup View -->
+        <div class="auth-view hidden" id="landing-signup-view">
+          <h3>Create Free Account</h3>
+          <p>Unlock access to all 500 questions and Sandbox resources.</p>
+          
+          <form id="landing-signup-form">
+            <div class="form-group-custom">
+              <label for="s-username">Choose Username</label>
+              <div class="input-wrapper-icon">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="s-username" placeholder="Min. 3 characters" required>
+              </div>
+            </div>
+            
+            <div class="form-group-custom">
+              <label for="s-password">Choose Password</label>
+              <div class="input-wrapper-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="s-password" placeholder="Min. 6 characters" required>
+              </div>
+            </div>
+
+            <div class="form-group-custom">
+              <label for="s-confirm">Confirm Password</label>
+              <div class="input-wrapper-icon">
+                <i class="fa-solid fa-circle-check"></i>
+                <input type="password" id="s-confirm" placeholder="Repeat password" required>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">Register Account</button>
+            <p class="error-text hidden" id="s-error-msg"></p>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- APPLICATION WORKSPACE (Unlocked for Logged In Users) -->
+  <div id="app-workspace" class="app-container hidden">
+    <!-- Navigation Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fa-solid fa-database text-gradient"></i>
+          <span>SQL<span class="text-accent">Master</span></span>
+        </div>
+        <p class="tagline">500 Interview Questions</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="trainer-tab">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>Trainer Q&A</span>
+        </button>
+        <button class="nav-btn" data-tab="playground-tab">
+          <i class="fa-solid fa-terminal"></i>
+          <span>SQL Sandbox</span>
+        </button>
+        <button class="nav-btn" data-tab="schema-tab">
+          <i class="fa-solid fa-sitemap"></i>
+          <span>Database Schema</span>
+        </button>
+        <button class="nav-btn" data-tab="theory-tab">
+          <i class="fa-solid fa-book"></i>
+          <span>Interview Theory</span>
+        </button>
+        <button class="nav-btn" data-tab="analytics-tab">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>My Analytics</span>
+        </button>
+        <button class="nav-btn" data-tab="admin-tab">
+          <i class="fa-solid fa-user-lock"></i>
+          <span>Account Center</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-status-card" id="sidebar-user-card">
+          <div class="user-avatar" id="sidebar-user-avatar">
+            <i class="fa-solid fa-user-astronaut"></i>
+          </div>
+          <div class="user-info">
+            <h4 class="username" id="sidebar-username">Guest User</h4>
+            <span class="role-badge" id="sidebar-role">Student Mode</span>
+          </div>
+        </div>
+        <button class="logout-btn hidden" id="user-logout">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout Account
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="search-container">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="search-input" placeholder="Search 500 questions, keywords, SQL syntax...">
+        </div>
+        <div class="quick-stats">
+          <div class="quick-stat-item">
+            <span class="stat-num" id="mastered-count-badge">0</span>
+            <span class="stat-lbl">Mastered</span>
+          </div>
+          <div class="quick-stat-item">
+            <span class="stat-num" id="review-count-badge">0</span>
+            <span class="stat-lbl">Review</span>
+          </div>
+          <div class="progress-bar-mini-container">
+            <div class="progress-info">
+              <span>Overall Progress</span>
+              <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progress-fill-bar" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- TAB 1: TRAINER Q&A -->
+      <section class="tab-content active" id="trainer-tab">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label for="filter-section"><i class="fa-solid fa-filter"></i> Topic</label>
+            <select id="filter-section">
+              <option value="all">All Topics (1 - 505)</option>
+              <option value="Joins">Section A: Joins (1-80)</option>
+              <option value="Subqueries & CTEs">Section B: Subqueries & CTEs (81-160)</option>
+              <option value="Window Functions">Section C: Window Functions (161-260)</option>
+              <option value="Views & Stored Procedures">Section D: Views & Stored Procedures (261-320)</option>
+              <option value="Triggers">Section E: Triggers (321-360)</option>
+              <option value="Normalization & Indexing">Section F: Indexing & Normalization (361-420)</option>
+              <option value="Mixed Interview Round">Section G: Mixed Interview Round (421-505)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-difficulty">Difficulty</label>
+            <select id="filter-difficulty">
+              <option value="all">All Levels</option>
+              <option value="Easy">Easy</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-status">Status</label>
+            <select id="filter-status">
+              <option value="all">All Questions</option>
+              <option value="mastered">Mastered</option>
+              <option value="review">Review Needed</option>
+              <option value="bookmarked">Bookmarked</option>
+              <option value="unattempted">Unattempted</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="results-header">
+          <span class="results-count" id="results-count-text">Showing 500 questions</span>
+          <div class="layout-controls">
+            <button class="btn btn-secondary btn-sm" id="collapse-all-btn">
+              <i class="fa-solid fa-angles-up"></i> Collapse All
+            </button>
+          </div>
+        </div>
+
+        <!-- Question List Container -->
+        <div class="question-list" id="questions-container">
+          <div class="loading-spinner">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading interview database...
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" id="pagination-controls">
+          <!-- Filled by JS -->
+        </div>
+      </section>
+
+      <!-- TAB 2: SQL SANDBOX -->
+      <section class="tab-content" id="playground-tab">
+        <div class="playground-wrapper">
+          <div class="playground-editor-section">
+            
+            <!-- Active Practice Question widget -->
+            <div class="active-question-panel" id="active-question-widget">
+              <div class="widget-header">
+                <span class="lbl"><i class="fa-solid fa-rocket text-accent"></i> Active Practice Question</span>
+                <button class="btn-clear-active" id="btn-clear-active-widget" title="Clear Active Question">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="widget-body">
+                <div class="active-q-meta">
+                  <span class="active-q-id" id="widget-q-id">Q1</span>
+                  <span class="badge" id="widget-q-diff">Easy</span>
+                  <span class="widget-q-category" id="widget-q-section">Joins</span>
+                  <span class="badge hidden" id="widget-q-status-badge" style="background-color: var(--success); color: #0a0a0c; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Solved</span>
+                </div>
+                <p class="active-q-text" id="widget-q-text">Select employee names and department names.</p>
+                <div class="widget-q-actions">
+                  <button class="btn btn-secondary btn-sm" id="widget-q-go-back"><i class="fa-solid fa-arrow-left"></i> Locate in Q&A List</button>
+                  <button class="btn btn-secondary btn-sm" id="widget-q-view-ans"><i class="fa-solid fa-eye"></i> View SQL Solution</button>
+                  <button class="btn btn-primary btn-sm" id="widget-q-test-ans"><i class="fa-solid fa-paste"></i> Paste Solution SQL</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Standard Sandbox Header -->
+            <div class="playground-header">
+              <div class="title-with-icon">
+                <i class="fa-solid fa-code text-accent"></i>
+                <h3>SQL Console</h3>
+              </div>
+              <div class="actions">
+                <button class="btn btn-secondary btn-sm" id="btn-load-sample">
+                  <i class="fa-solid fa-arrows-rotate"></i> Reset Schema Data
+                </button>
+                <button class="btn btn-primary btn-sm" id="btn-run-query">
+                  <i class="fa-solid fa-play"></i> Run Query (Ctrl+Enter)
+                </button>
+              </div>
+            </div>
+            
+            <div class="editor-container">
+              <textarea id="sql-query-editor" placeholder="-- Type your SQL query here...&#10;-- Example: SELECT * FROM Employees LIMIT 5;"></textarea>
+            </div>
+
+            <!-- Run results panel -->
+            <div class="playground-results">
+              <div class="results-panel-header">
+                <span class="lbl"><i class="fa-solid fa-table-list"></i> Query Output</span>
+                <span class="status-indicator" id="query-status">Ready</span>
+              </div>
+              <div class="results-output-container" id="query-results-table">
+                <div class="empty-state">
+                  <i class="fa-solid fa-play-circle"></i>
+                  <p>Write an SQL query above and click "Run Query" to see output tables here.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Sidebar in Playground for Quick Schema Reference -->
+          <div class="playground-schema-reference">
+            <h4>Quick Schema Reference</h4>
+            <p class="subtitle">Click a table to inspect columns or load a quick SELECT template.</p>
+            <div class="schema-list" id="playground-schema-list">
+              <!-- Loaded by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: DATABASE SCHEMA -->
+      <section class="tab-content" id="schema-tab">
+        <div class="schema-view-container">
+          <div class="schema-intro">
+            <h2>Practice Database Schema</h2>
+            <p>This relational schema is pre-loaded into your in-browser SQLite database sandbox. You can write JOINs, Subqueries, Window Functions, and CTEs directly against these tables.</p>
+          </div>
+          
+          <div class="er-diagram-container">
+            <div class="schema-tables-grid" id="er-tables-grid">
+              <!-- Dynamically populated tables structures -->
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- TAB: INTERVIEW THEORY -->
+      <section class="tab-content" id="theory-tab">
+        <div class="theory-view-container" style="padding: 1.5rem; max-width: 1000px; margin: 0 auto; height: 100%; overflow-y: auto;">
+          <div class="theory-intro" style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+              <i class="fa-solid fa-book text-accent" style="margin-right: 10px;"></i> SQL Interview Theory Guide
+            </h2>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">
+              Master core relational concepts, transactions (ACID), keys, indexing, query optimization, and tricky scenario questions compiled from TCS and industry-standard notebooks.
+            </p>
+          </div>
+          
+          <div class="theory-search-bar" style="margin-bottom: 1.5rem;">
+            <div class="search-container" style="width: 100%; max-width: 100%;">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="theory-search-input" placeholder="Search 40+ theory questions, concepts, and scenarios...">
+            </div>
+          </div>
+          
+          <div class="theory-list" id="theory-questions-container" style="display: flex; flex-direction: column; gap: 15px;">
+            <!-- Filled dynamically by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: MY ANALYTICS -->
+      <section class="tab-content" id="analytics-tab">
+        <div class="analytics-container">
+          <h2>Progress Dashboard</h2>
+          <p class="section-subtitle">Real-time breakdown of your SQL interview preparation.</p>
+          
+          <div class="analytics-metrics-row">
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Total Mastered</span>
+                <i class="fa-solid fa-circle-check text-success"></i>
+              </div>
+              <h3 class="metric-val" id="analytics-mastered">0 / 500</h3>
+              <p class="metric-sub" id="analytics-mastered-pct">0% Complete</p>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Flagged for Review</span>
+                <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+              </div>
+              <h3 class="metric-val" id="analytics-review">0</h3>
+              <p class="metric-sub">Marked to practice later</p>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-header">
+                <span>Bookmarked</span>
+                <i class="fa-solid fa-bookmark text-accent"></i>
+              </div>
+              <h3 class="metric-val" id="analytics-bookmarks">0</h3>
+              <p class="metric-sub">Saved key questions</p>
+            </div>
+          </div>
+
+          <div class="analytics-charts-grid">
+            <div class="chart-card">
+              <h3>Topic-wise Progress</h3>
+              <div class="progress-list" id="analytics-topic-progress">
+                <!-- Dynamically filled with topic bars -->
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <h3>Active Bookmarks</h3>
+              <div class="bookmarked-list-container" id="analytics-bookmarked-list">
+                <p class="empty-msg">No bookmarks saved yet. Use the bookmark icon on any question card to save it here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: ACCOUNT CENTER -->
+      <section class="tab-content" id="admin-tab">
+        <div class="admin-dashboard-container" id="user-profile-box">
+          <div class="user-profile-header">
+            <div class="profile-details">
+              <div class="profile-avatar">
+                <i class="fa-solid fa-user-astronaut"></i>
+              </div>
+              <div>
+                <h2 id="profile-title-name">John Doe</h2>
+                <span class="role-badge" id="profile-role-badge" style="font-size: 0.8rem;">Student Mode</span>
+              </div>
+            </div>
+            <div class="profile-sync-actions">
+              <span class="sync-status-lbl" id="sync-status-indicator"><i class="fa-solid fa-cloud-arrow-up"></i> Progress synced with cloud</span>
+              <button class="btn btn-secondary btn-sm" id="btn-force-sync">
+                <i class="fa-solid fa-arrows-rotate"></i> Manual Sync
+              </button>
+            </div>
+          </div>
+
+          <!-- ADMIN-ONLY SECTION -->
+          <div class="admin-control-section-wrapper hidden" id="admin-only-dashboard">
+            <div class="admin-header-actions" style="margin-top: 1.5rem;">
+              <h2>Admin Management Console</h2>
+              <div class="backup-actions">
+                <button class="btn btn-secondary btn-sm" id="btn-export-db">
+                  <i class="fa-solid fa-download"></i> Export Database JSON
+                </button>
+                <label class="btn btn-secondary btn-sm" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-upload"></i> Import Database JSON
+                  <input type="file" id="btn-import-db" style="display: none;" accept=".json">
+                </label>
+              </div>
+            </div>
+
+            <div class="admin-main-grid" style="margin-top: 1rem;">
+              <!-- Add / Edit Form -->
+              <div class="admin-card form-card">
+                <h3 id="form-action-title">Create New SQL Question</h3>
+                <p class="subtitle">Complete the fields below to add a new question to the system. Newly created questions will receive the next sequential ID.</p>
+                
+                <form id="question-admin-form">
+                  <input type="hidden" id="form-question-id">
+                  
+                  <div class="form-row">
+                    <div class="form-group-custom">
+                      <label for="form-section">Section Category</label>
+                      <select id="form-section" required>
+                        <option value="Joins">Joins</option>
+                        <option value="Subqueries & CTEs">Subqueries & CTEs</option>
+                        <option value="Window Functions">Window Functions</option>
+                        <option value="Views & Stored Procedures">Views & Stored Procedures</option>
+                        <option value="Triggers">Triggers</option>
+                        <option value="Normalization & Indexing">Normalization & Indexing</option>
+                        <option value="Mixed Interview Round">Mixed Interview Round</option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group-custom">
+                      <label for="form-difficulty">Difficulty</label>
+                      <select id="form-difficulty" required>
+                        <option value="Easy">Easy</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Hard">Hard</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group-custom">
+                    <label for="form-question">Question Prompt</label>
+                    <textarea id="form-question" placeholder="Enter the interview question description..." required rows="3"></textarea>
+                  </div>
+
+                  <div class="form-group-custom">
+                    <label for="form-answer">SQL Answer Query</label>
+                    <textarea id="form-answer" class="code-font" placeholder="SELECT e.EmployeeName, ... FROM Employees e..." required rows="5"></textarea>
+                  </div>
+
+                  <div class="form-group-custom">
+                    <label for="form-explanation">Detailed Explanation / Notes</label>
+                    <textarea id="form-explanation" placeholder="Provide a detailed explanation of why this query works..." rows="3"></textarea>
+                  </div>
+
+                  <div class="form-btn-row">
+                    <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">Cancel Edit</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-question">Save Question</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Stats & Quick Actions -->
+              <div class="admin-card stats-card">
+                <h3>Database Information</h3>
+                
+                <div class="admin-db-stats">
+                  <div class="db-stat-item">
+                    <span class="lbl">Total Questions:</span>
+                    <strong class="val" id="admin-total-questions">500</strong>
+                  </div>
+                  <div class="db-stat-item">
+                    <span class="lbl">Joins Questions:</span>
+                    <strong class="val" id="admin-count-joins">0</strong>
+                  </div>
+                  <div class="db-stat-item">
+                    <span class="lbl">Subqueries Questions:</span>
+                    <strong class="val" id="admin-count-subqueries">0</strong>
+                  </div>
+                  <div class="db-stat-item">
+                    <span class="lbl">Window Functions:</span>
+                    <strong class="val" id="admin-count-window">0</strong>
+                  </div>
+                  <div class="db-stat-item">
+                    <span class="lbl">Stored Procs & Views:</span>
+                    <strong class="val" id="admin-count-views">0</strong>
+                  </div>
+                  <div class="db-stat-item">
+                    <span class="lbl">Triggers:</span>
+                    <strong class="val" id="admin-count-triggers">0</strong>
+                  </div>
+                </div>
+
+                <div class="dangerous-actions-zone">
+                  <h4>System Operations</h4>
+                  <p class="warning-text"><i class="fa-solid fa-triangle-exclamation"></i> Warning: These actions modify the backend questions file permanently.</p>
+                  <button class="btn btn-danger btn-block" id="btn-reset-db">
+                    <i class="fa-solid fa-trash-can"></i> Re-seed Base Database (500 Questions)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main JavaScript Bundle -->
+  <script src="app.js"></script>
+</body>
+</html>
