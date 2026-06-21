@@ -919,7 +919,7 @@ async function triggerProgressUpload() {
     if (!res.ok) {
       if (res.status === 401 || res.status === 403 || res.status === 404) {
         showToast('Session expired or profile not found. Logging out...', 'warning');
-        window.logoutUserAction(false);
+        window.logoutUserAction(false, false);
       } else {
         console.warn('Sync failed.');
       }
@@ -967,8 +967,8 @@ async function syncCloudProgress() {
       }
     } else {
       if (res.status === 401 || res.status === 403 || res.status === 404) {
-        showToast('Session expired or profile not found. Logging out...', 'warning');
-        window.logoutUserAction(false);
+        showToast('Session expired or profile not found. Please log in again.', 'warning');
+        window.logoutUserAction(false, false);
         return;
       }
       if (syncIndicator) {
@@ -1696,9 +1696,11 @@ function loginSuccess(data) {
   localStorage.setItem('user_role', data.role);
 
   if (data.progress) {
-    state.bookmarks = data.progress.bookmarks || [];
-    state.mastered = data.progress.mastered || [];
-    state.review = data.progress.review || [];
+    // Merge server progress with local progress so local offline work is not wiped out
+    state.bookmarks = [...new Set([...state.bookmarks, ...(data.progress.bookmarks || [])])];
+    state.mastered = [...new Set([...state.mastered, ...(data.progress.mastered || [])])];
+    state.review = [...new Set([...state.review, ...(data.progress.review || [])])];
+    
     localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
     localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
     localStorage.setItem('sql_review', JSON.stringify(state.review));
@@ -1716,7 +1718,7 @@ function loginSuccess(data) {
 // ----------------------------------------------------
 // CORE ACCOUNT CENTER AUTH ACTIONS (LOGOUT & MANUAL SYNC)
 // ----------------------------------------------------
-window.logoutUserAction = function(showMsg = true) {
+window.logoutUserAction = function(showMsg = true, clearProgress = true) {
   state.token = null;
   state.username = null;
   state.role = 'guest';
@@ -1726,13 +1728,15 @@ window.logoutUserAction = function(showMsg = true) {
   localStorage.removeItem('user_name');
   localStorage.removeItem('user_role');
   
-  // Reset local progress
-  state.bookmarks = [];
-  state.mastered = [];
-  state.review = [];
-  localStorage.removeItem('sql_bookmarks');
-  localStorage.removeItem('sql_mastered');
-  localStorage.removeItem('sql_review');
+  if (clearProgress) {
+    // Reset local progress
+    state.bookmarks = [];
+    state.mastered = [];
+    state.review = [];
+    localStorage.removeItem('sql_bookmarks');
+    localStorage.removeItem('sql_mastered');
+    localStorage.removeItem('sql_review');
+  }
 
   toggleWorkspaceView(false);
   updateAuthView(false);
