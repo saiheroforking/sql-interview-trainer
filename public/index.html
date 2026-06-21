@@ -581,6 +581,34 @@
                 </div>
               </div>
             </div>
+
+            <!-- Users List Card -->
+            <div class="admin-card users-card" style="margin-top: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem;">
+                <h3 style="margin-bottom: 0; color: var(--text-main); font-size: 1.1rem;"><i class="fa-solid fa-users text-accent" style="margin-right: 8px;"></i> Registered User Accounts</h3>
+                <span class="role-badge" id="admin-users-count" style="font-size: 0.8rem; background: rgba(62, 207, 142, 0.1); color: var(--color-primary);">0 Users</span>
+              </div>
+              <p class="subtitle" style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.85rem;">Inspect security credentials (salt & PBKDF2 hash) and learning statistics stored on the backend.</p>
+              
+              <div class="table-responsive-custom" style="overflow-x: auto; max-height: 400px; border-radius: 6px; border: 1px solid var(--border-light);">
+                <table class="admin-users-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem; color: var(--text-muted); min-width: 800px;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-light); color: var(--text-main); background: rgba(255,255,255,0.01);">
+                      <th style="padding: 12px 10px;">Username</th>
+                      <th style="padding: 12px 10px;">Role</th>
+                      <th style="padding: 12px 10px; text-align: center;">Mastered</th>
+                      <th style="padding: 12px 10px; text-align: center;">Bookmarks</th>
+                      <th style="padding: 12px 10px; text-align: center;">Review</th>
+                      <th style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Salt (Hex)</th>
+                      <th style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Password Hash (SHA-512)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-list-tbody">
+                    <!-- Loaded dynamically by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>

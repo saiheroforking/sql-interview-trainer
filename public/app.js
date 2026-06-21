@@ -209,6 +209,8 @@ function initTabs() {
         renderAnalytics();
       } else if (targetTab === 'theory-tab') {
         renderTheoryList();
+      } else if (targetTab === 'admin-tab' && state.role === 'admin') {
+        fetchAdminUsers();
       }
     });
   });
@@ -1779,6 +1781,7 @@ function updateAuthView(isAuthenticated) {
       sidebarUserAvatar.style.background = 'linear-gradient(135deg, var(--color-accent), var(--danger))';
       adminConsole.classList.remove('hidden');
       setTimeout(fillAdminDBStats, 500);
+      setTimeout(fetchAdminUsers, 600);
     } else {
       profileRole.textContent = 'Student Mode';
       profileRole.style.color = 'var(--color-secondary)';
@@ -2513,5 +2516,66 @@ function formatAnswerText(text) {
   }
   
   return result;
+}
+
+async function fetchAdminUsers() {
+  const tbody = document.getElementById('admin-users-list-tbody');
+  const countSpan = document.getElementById('admin-users-count');
+  if (!tbody) return;
+
+  if (!state.token || state.role !== 'admin') return;
+
+  try {
+    const response = await fetch('/api/admin/users', {
+      headers: {
+        'Authorization': `Bearer ${state.token}`
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch users list');
+
+    const usersData = await response.json();
+    countSpan.textContent = `${usersData.length} User${usersData.length === 1 ? '' : 's'}`;
+
+    if (usersData.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No registered users found.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = usersData.map(u => {
+      const shortSalt = u.salt ? `${u.salt.substring(0, 12)}...` : 'N/A';
+      const shortHash = u.hash ? `${u.hash.substring(0, 20)}...` : 'N/A';
+      
+      const roleColor = u.role === 'admin' ? 'var(--color-primary)' : 'var(--color-secondary)';
+      const roleBg = u.role === 'admin' ? 'rgba(62, 207, 142, 0.1)' : 'rgba(6, 182, 212, 0.1)';
+
+      return `
+        <tr style="border-bottom: 1px solid var(--border-light); transition: background-color 0.2s;">
+          <td style="padding: 12px 10px; font-weight: 600; color: var(--text-main);">${escapeHTML(u.username)}</td>
+          <td style="padding: 12px 10px;">
+            <span class="role-badge" style="font-size: 0.75rem; background: ${roleBg}; color: ${roleColor}; font-weight: 600;">
+              ${escapeHTML(u.role === 'admin' ? 'Admin' : 'Student')}
+            </span>
+          </td>
+          <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--color-primary);">${u.masteredCount}</td>
+          <td style="padding: 12px 10px; text-align: center; color: var(--text-main);">${u.bookmarksCount}</td>
+          <td style="padding: 12px 10px; text-align: center; color: var(--warning);">${u.reviewCount}</td>
+          <td style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(u.salt)}">${escapeHTML(shortSalt)}</td>
+          <td style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(u.hash)}">${escapeHTML(shortHash)}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error(error);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">Failed to retrieve user accounts from server.</td>
+      </tr>
+    `;
+  }
 }
 

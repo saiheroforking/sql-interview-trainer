@@ -237,8 +237,23 @@ app.post('/api/user/progress', authenticateToken, (req, res) => {
 });
 
 // ----------------------------------------------------
-// ADMIN QUESTIONS CRUD (REQUIRES ADMIN ROLE)
-// ----------------------------------------------------
+app.get('/api/admin/users', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Administrative privileges required.' });
+  }
+  const users = readUsers();
+  const usersData = users.map(u => ({
+    username: u.username,
+    role: u.role,
+    salt: u.salt,
+    hash: u.hash,
+    bookmarksCount: (u.bookmarks || []).length,
+    masteredCount: (u.mastered || []).length,
+    reviewCount: (u.review || []).length
+  }));
+  res.json(usersData);
+});
+
 app.post('/api/questions', authenticateToken, (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Administrative privileges required.' });
@@ -366,10 +381,14 @@ app.get('*', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`  SQL Interview Trainer server running!`);
-  console.log(`  Local URL: http://localhost:${PORT}`);
-  console.log(`  Admin Passcode: ${ADMIN_PASSCODE}`);
-  console.log(`====================================================`);
-});
+if (process.env.NODE_ENV !== 'production' && (!process.env.VERCEL || require.main === module)) {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`  SQL Interview Trainer server running!`);
+    console.log(`  Local URL: http://localhost:${PORT}`);
+    console.log(`  Admin Passcode: ${ADMIN_PASSCODE}`);
+    console.log(`====================================================`);
+  });
+}
+
+module.exports = app;
