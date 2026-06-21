@@ -305,6 +305,7 @@ function seedSQLiteDatabase() {
       stock_quantity INTEGER,
       Status VARCHAR(20),
       SupplierID INTEGER,
+      VendorID INTEGER,
       FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
     );
     
