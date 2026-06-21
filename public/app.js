@@ -2561,7 +2561,7 @@ async function fetchAdminUsers() {
               ${escapeHTML(u.role === 'admin' ? 'Admin' : 'Student')}
             </span>
           </td>
-          <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--color-primary);">${u.masteredCount}</td>
+          <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--color-primary);">${u.masteredCount} / ${state.questions.length}</td>
           <td style="padding: 12px 10px; text-align: center; color: var(--text-main);">${u.bookmarksCount}</td>
           <td style="padding: 12px 10px; text-align: center; color: var(--warning);">${u.reviewCount}</td>
           <td style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(u.salt)}">${escapeHTML(shortSalt)}</td>
