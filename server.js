@@ -31,8 +31,39 @@ function generateSalt() {
 let inMemoryQuestions = null;
 let inMemoryUsers = null;
 
+// Helper to perform REST API requests to Vercel KV if available
+async function kvRequest(command) {
+  try {
+    const url = process.env.KV_REST_API_URL;
+    const token = process.env.KV_REST_API_TOKEN;
+    if (!url || !token) return null;
+
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+
+    const response = await fetch(cleanUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(command)
+    });
+    
+    if (!response.ok) {
+      console.error('Vercel KV REST command failed:', response.statusText);
+      return null;
+    }
+    
+    const data = await response.json();
+    return data.result;
+  } catch (error) {
+    console.error('Error in Vercel KV request:', error);
+    return null;
+  }
+}
+
 // Helper to read database files
-function readQuestions() {
+async function readQuestions() {
   if (inMemoryQuestions !== null) {
     return inMemoryQuestions;
   }
@@ -47,6 +78,65 @@ function readQuestions() {
   }
 }
 
+async function writeQuestions(data) {
+  inMemoryQuestions = data;
+  try {
+    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.warn('Warning: Write to questions.json failed. Using in-memory fallback.', error.message);
+    return true;
+  }
+}
+
+async function readUsers() {
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    const result = await kvRequest(['GET', 'users']);
+    if (result) {
+      try {
+        const parsed = JSON.parse(result);
+        inMemoryUsers = parsed;
+        return parsed;
+      } catch (err) {
+        console.error('Failed to parse users from Vercel KV:', err);
+      }
+    }
+    if (inMemoryUsers !== null) return inMemoryUsers;
+  }
+
+  if (inMemoryUsers !== null) {
+    return inMemoryUsers;
+  }
+  try {
+    if (!fs.existsSync(USERS_FILE)) return [];
+    const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+    inMemoryUsers = data;
+    return data;
+  } catch (error) {
+    console.error('Error reading users:', error);
+    return inMemoryUsers || [];
+  }
+}
+
+async function writeUsers(data) {
+  inMemoryUsers = data;
+
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    const success = await kvRequest(['SET', 'users', JSON.stringify(data)]);
+    if (success) {
+      return true;
+    }
+    console.warn('Warning: Write to Vercel KV failed. Falling back.');
+  }
+
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.warn('Warning: Write to users.json failed. Using in-memory fallback.', error.message);
+    return true;
+  }
+}
 function writeQuestions(data) {
   inMemoryQuestions = data;
   try {
@@ -105,15 +195,15 @@ function authenticateToken(req, res, next) {
 // ----------------------------------------------------
 // PUBLIC QUESTIONS API
 // ----------------------------------------------------
-app.get('/api/questions', (req, res) => {
-  const questions = readQuestions();
+app.get('/api/questions', async (req, res) => {
+  const questions = await readQuestions();
   res.json(questions);
 });
 
 // ----------------------------------------------------
 // AUTHENTICATION ENDPOINTS (SIGNUP & LOGIN)
 // ----------------------------------------------------
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required.' });
@@ -127,7 +217,7 @@ app.post('/api/auth/signup', (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters.' });
   }
 
-  const users = readUsers();
+  const users = await readUsers();
   
   // Check if user already exists
   const existingUser = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
@@ -150,7 +240,7 @@ app.post('/api/auth/signup', (req, res) => {
   };
 
   users.push(newUser);
-  if (writeUsers(users)) {
+  if (await writeUsers(users)) {
     const token = jwt.sign({ username: cleanUsername, role: 'user' }, SECRET_KEY, { expiresIn: '12h' });
     res.status(201).json({ success: true, token, username: cleanUsername, role: 'user' });
   } else {
@@ -158,7 +248,7 @@ app.post('/api/auth/signup', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -177,7 +267,7 @@ app.post('/api/auth/login', (req, res) => {
     }
   }
 
-  const users = readUsers();
+  const users = await readUsers();
   const user = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
 
   if (!user) {
@@ -207,8 +297,8 @@ app.post('/api/auth/login', (req, res) => {
 // ----------------------------------------------------
 // USER PROGRESS SYNC
 // ----------------------------------------------------
-app.get('/api/user/progress', authenticateToken, (req, res) => {
-  const users = readUsers();
+app.get('/api/user/progress', authenticateToken, async (req, res) => {
+  const users = await readUsers();
   const user = users.find(u => u.username.toLowerCase() === req.user.username.toLowerCase());
   
   if (!user) {
@@ -227,14 +317,14 @@ app.get('/api/user/progress', authenticateToken, (req, res) => {
   });
 });
 
-app.post('/api/user/progress', authenticateToken, (req, res) => {
+app.post('/api/user/progress', authenticateToken, async (req, res) => {
   const { bookmarks, mastered, review, timeSpent } = req.body;
   
   if (!Array.isArray(bookmarks) || !Array.isArray(mastered) || !Array.isArray(review)) {
     return res.status(400).json({ error: 'Progress data must contain arrays of question IDs.' });
   }
 
-  const users = readUsers();
+  const users = await readUsers();
   const index = users.findIndex(u => u.username.toLowerCase() === req.user.username.toLowerCase());
 
   if (index === -1) {
@@ -251,7 +341,7 @@ app.post('/api/user/progress', authenticateToken, (req, res) => {
     users[index].timeSpent = timeSpent;
   }
 
-  if (writeUsers(users)) {
+  if (await writeUsers(users)) {
     res.json({ success: true });
   } else {
     res.status(500).json({ error: 'Failed to save progress on the server.' });
@@ -259,11 +349,11 @@ app.post('/api/user/progress', authenticateToken, (req, res) => {
 });
 
 // ----------------------------------------------------
-app.get('/api/admin/users', authenticateToken, (req, res) => {
+app.get('/api/admin/users', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Administrative privileges required.' });
   }
-  const users = readUsers();
+  const users = await readUsers();
   const usersData = users.map(u => ({
     username: u.username,
     role: u.role,
@@ -280,7 +370,7 @@ app.get('/api/admin/users', authenticateToken, (req, res) => {
   res.json(usersData);
 });
 
-app.post('/api/questions', authenticateToken, (req, res) => {
+app.post('/api/questions', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Administrative privileges required.' });
   }
@@ -291,7 +381,7 @@ app.post('/api/questions', authenticateToken, (req, res) => {
     return res.status(400).json({ error: 'Section, question title, difficulty, and answer SQL are required.' });
   }
 
-  const questions = readQuestions();
+  const questions = await readQuestions();
   const maxId = questions.reduce((max, q) => q.id > max ? q.id : max, 0);
   const newId = maxId + 1;
 
@@ -307,14 +397,14 @@ app.post('/api/questions', authenticateToken, (req, res) => {
   questions.push(newQuestion);
   questions.sort((a, b) => a.id - b.id);
 
-  if (writeQuestions(questions)) {
+  if (await writeQuestions(questions)) {
     res.status(201).json({ success: true, question: newQuestion });
   } else {
     res.status(500).json({ error: 'Failed to save the new question to database.' });
   }
 });
 
-app.put('/api/questions/:id', authenticateToken, (req, res) => {
+app.put('/api/questions/:id', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Administrative privileges required.' });
   }
@@ -322,7 +412,7 @@ app.put('/api/questions/:id', authenticateToken, (req, res) => {
   const id = parseInt(req.params.id);
   const { section, question, difficulty, answer, explanation } = req.body;
 
-  const questions = readQuestions();
+  const questions = await readQuestions();
   const index = questions.findIndex(q => q.id === id);
 
   if (index === -1) {
@@ -335,20 +425,20 @@ app.put('/api/questions/:id', authenticateToken, (req, res) => {
   if (answer) questions[index].answer = answer;
   if (explanation !== undefined) questions[index].explanation = explanation;
 
-  if (writeQuestions(questions)) {
+  if (await writeQuestions(questions)) {
     res.json({ success: true, question: questions[index] });
   } else {
     res.status(500).json({ error: 'Failed to update the question in database.' });
   }
 });
 
-app.delete('/api/questions/:id', authenticateToken, (req, res) => {
+app.delete('/api/questions/:id', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Administrative privileges required.' });
   }
 
   const id = parseInt(req.params.id);
-  const questions = readQuestions();
+  const questions = await readQuestions();
   const index = questions.findIndex(q => q.id === id);
 
   if (index === -1) {
@@ -357,7 +447,7 @@ app.delete('/api/questions/:id', authenticateToken, (req, res) => {
 
   const deletedQuestion = questions.splice(index, 1)[0];
 
-  if (writeQuestions(questions)) {
+  if (await writeQuestions(questions)) {
     res.json({ success: true, message: 'Question deleted successfully', id: deletedQuestion.id });
   } else {
     res.status(500).json({ error: 'Failed to delete the question from database.' });
@@ -376,7 +466,7 @@ app.get('/api/database/export', authenticateToken, (req, res) => {
   res.sendFile(QUESTIONS_FILE);
 });
 
-app.post('/api/database/import', authenticateToken, (req, res) => {
+app.post('/api/database/import', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Administrative privileges required.' });
   }
@@ -394,7 +484,7 @@ app.post('/api/database/import', authenticateToken, (req, res) => {
     }
   }
 
-  if (writeQuestions(questionsData)) {
+  if (await writeQuestions(questionsData)) {
     res.json({ success: true, message: `Successfully imported ${questionsData.length} questions.` });
   } else {
     res.status(500).json({ error: 'Failed to import the database file.' });
