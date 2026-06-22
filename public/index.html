@@ -599,8 +599,10 @@
                       <th style="padding: 12px 10px; text-align: center;">Solved</th>
                       <th style="padding: 12px 10px; text-align: center;">Bookmarks</th>
                       <th style="padding: 12px 10px; text-align: center;">Review</th>
+                      <th style="padding: 12px 10px; text-align: center;">Active Time</th>
                       <th style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Salt (Hex)</th>
                       <th style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Password Hash (SHA-512)</th>
+                      <th style="padding: 12px 10px; text-align: center;">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="admin-users-list-tbody">
@@ -613,6 +615,47 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- User Details Modal for Admin -->
+  <div id="admin-user-details-modal" class="modal-backdrop hidden">
+    <div class="modal-content admin-details-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-gear text-accent"></i> User Profile: <span id="modal-details-username"></span></h3>
+        <button class="close-btn" onclick="closeAdminDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="details-grid">
+          <div class="details-stat-card">
+            <span class="stat-label">Active Time</span>
+            <span class="stat-val" id="modal-details-time">0s</span>
+          </div>
+          <div class="details-stat-card">
+            <span class="stat-label">Solved</span>
+            <span class="stat-val" id="modal-details-solved-count" style="color: var(--color-primary);">0</span>
+          </div>
+          <div class="details-stat-card">
+            <span class="stat-label">Bookmarks</span>
+            <span class="stat-val" id="modal-details-bookmarks-count" style="color: var(--color-secondary);">0</span>
+          </div>
+          <div class="details-stat-card">
+            <span class="stat-label">In Review</span>
+            <span class="stat-val" id="modal-details-review-count" style="color: var(--warning);">0</span>
+          </div>
+        </div>
+        
+        <div class="details-sections">
+          <div class="details-section">
+            <h4><i class="fa-solid fa-circle-check text-success"></i> Mastered Questions (<span id="modal-details-solved-title-count">0</span>)</h4>
+            <div class="details-list" id="modal-details-solved-list"></div>
+          </div>
+          <div class="details-section">
+            <h4><i class="fa-solid fa-bookmark text-secondary"></i> Bookmarks (<span id="modal-details-bookmarks-title-count">0</span>)</h4>
+            <div class="details-list" id="modal-details-bookmarks-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Notification Toast Container -->

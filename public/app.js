@@ -14,6 +14,7 @@ let state = {
   bookmarks: JSON.parse(localStorage.getItem(`sql_bookmarks${initialSuffixOnLoad}`)) || JSON.parse(localStorage.getItem('sql_bookmarks')) || [],
   mastered: JSON.parse(localStorage.getItem(`sql_mastered${initialSuffixOnLoad}`)) || JSON.parse(localStorage.getItem('sql_mastered')) || [],
   review: JSON.parse(localStorage.getItem(`sql_review${initialSuffixOnLoad}`)) || JSON.parse(localStorage.getItem('sql_review')) || [],
+  timeSpent: parseInt(localStorage.getItem(`sql_time_spent${initialSuffixOnLoad}`)) || parseInt(localStorage.getItem('sql_time_spent')) || 0,
   token: localStorage.getItem('admin_token') || null, // Stores JWT token
   username: localStorage.getItem('user_name') || null,
   role: localStorage.getItem('user_role') || 'guest', // 'guest', 'user', 'admin'
@@ -141,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleWorkspaceView(true);
     updateAuthView(true);
     syncCloudProgress();
+    initSessionTimer();
   } else {
     toggleWorkspaceView(false);
     updateAuthView(false);
@@ -826,12 +828,14 @@ function saveLocalProgress() {
   localStorage.setItem('sql_bookmarks', JSON.stringify(state.bookmarks));
   localStorage.setItem('sql_mastered', JSON.stringify(state.mastered));
   localStorage.setItem('sql_review', JSON.stringify(state.review));
+  localStorage.setItem('sql_time_spent', state.timeSpent.toString());
 
   if (state.username && state.role !== 'guest') {
     const keySuffix = `_${state.username.toLowerCase()}`;
     localStorage.setItem(`sql_bookmarks${keySuffix}`, JSON.stringify(state.bookmarks));
     localStorage.setItem(`sql_mastered${keySuffix}`, JSON.stringify(state.mastered));
     localStorage.setItem(`sql_review${keySuffix}`, JSON.stringify(state.review));
+    localStorage.setItem(`sql_time_spent${keySuffix}`, state.timeSpent.toString());
   }
 }
 
@@ -917,7 +921,8 @@ async function triggerProgressUpload() {
   const payload = {
     bookmarks: state.bookmarks,
     mastered: state.mastered,
-    review: state.review
+    review: state.review,
+    timeSpent: state.timeSpent
   };
 
   try {
@@ -996,6 +1001,34 @@ async function syncCloudProgress() {
       syncIndicator.style.color = 'var(--danger)';
     }
   }
+}
+
+let sessionTimerInterval = null;
+let activeTicks = 0;
+
+function initSessionTimer() {
+  if (sessionTimerInterval) {
+    clearInterval(sessionTimerInterval);
+    sessionTimerInterval = null;
+  }
+
+  // Only run the timer if the user is a logged-in student (role === 'user')
+  if (!state.token || state.role !== 'user' || !state.username) return;
+
+  sessionTimerInterval = setInterval(() => {
+    state.timeSpent += 1;
+    activeTicks += 1;
+
+    // Every 10 seconds, write to localStorage cache
+    if (activeTicks % 10 === 0) {
+      saveLocalProgress();
+    }
+
+    // Every 20 seconds, sync to the server
+    if (activeTicks % 20 === 0) {
+      triggerProgressUpload();
+    }
+  }, 1000);
 }
 
 // ----------------------------------------------------
@@ -1712,16 +1745,19 @@ function loginSuccess(data) {
   const localBookmarks = JSON.parse(localStorage.getItem(`sql_bookmarks${keySuffix}`)) || [];
   const localMastered = JSON.parse(localStorage.getItem(`sql_mastered${keySuffix}`)) || [];
   const localReview = JSON.parse(localStorage.getItem(`sql_review${keySuffix}`)) || [];
+  const localTimeSpent = parseInt(localStorage.getItem(`sql_time_spent${keySuffix}`)) || parseInt(localStorage.getItem('sql_time_spent')) || 0;
 
   if (data.progress) {
     // Merge server progress with local progress so local offline work is not wiped out
     state.bookmarks = [...new Set([...localBookmarks, ...state.bookmarks, ...(data.progress.bookmarks || [])])];
     state.mastered = [...new Set([...localMastered, ...state.mastered, ...(data.progress.mastered || [])])];
     state.review = [...new Set([...localReview, ...state.review, ...(data.progress.review || [])])];
+    state.timeSpent = Math.max(localTimeSpent, data.progress.timeSpent || 0);
   } else {
     state.bookmarks = [...new Set([...localBookmarks, ...state.bookmarks])];
     state.mastered = [...new Set([...localMastered, ...state.mastered])];
     state.review = [...new Set([...localReview, ...state.review])];
+    state.timeSpent = localTimeSpent;
   }
 
   saveLocalProgress();
@@ -1731,6 +1767,7 @@ function loginSuccess(data) {
   toggleWorkspaceView(true);
   updateAuthView(true);
   syncCloudProgress();
+  initSessionTimer();
   applyFilters(); // Load questions
   updateProgressUI();
 }
@@ -1739,6 +1776,12 @@ function loginSuccess(data) {
 // CORE ACCOUNT CENTER AUTH ACTIONS (LOGOUT & MANUAL SYNC)
 // ----------------------------------------------------
 window.logoutUserAction = function(showMsg = true, clearProgress = true) {
+  if (sessionTimerInterval) {
+    clearInterval(sessionTimerInterval);
+    sessionTimerInterval = null;
+  }
+  activeTicks = 0;
+
   state.token = null;
   state.username = null;
   state.role = 'guest';
@@ -1753,9 +1796,11 @@ window.logoutUserAction = function(showMsg = true, clearProgress = true) {
     state.bookmarks = [];
     state.mastered = [];
     state.review = [];
+    state.timeSpent = 0;
     localStorage.removeItem('sql_bookmarks');
     localStorage.removeItem('sql_mastered');
     localStorage.removeItem('sql_review');
+    localStorage.removeItem('sql_time_spent');
   }
 
   toggleWorkspaceView(false);
@@ -2542,6 +2587,19 @@ function formatAnswerText(text) {
   return result;
 }
 
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return '0s';
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  let result = '';
+  if (hrs > 0) result += `${hrs}h `;
+  if (mins > 0) result += `${mins}m `;
+  if (secs > 0 || result === '') result += `${secs}s`;
+  return result.trim();
+}
+
 async function fetchAdminUsers() {
   const tbody = document.getElementById('admin-users-list-tbody');
   const countSpan = document.getElementById('admin-users-count');
@@ -2559,12 +2617,13 @@ async function fetchAdminUsers() {
     if (!response.ok) throw new Error('Failed to fetch users list');
 
     const usersData = await response.json();
+    window.lastFetchedAdminUsers = usersData; // Cache locally
     countSpan.textContent = `${usersData.length} User${usersData.length === 1 ? '' : 's'}`;
 
     if (usersData.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No registered users found.</td>
+          <td colspan="9" style="text-align: center; padding: 20px; color: var(--text-muted);">No registered users found.</td>
         </tr>
       `;
       return;
@@ -2588,8 +2647,14 @@ async function fetchAdminUsers() {
           <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--color-primary);">${u.masteredCount} / ${state.questions.length}</td>
           <td style="padding: 12px 10px; text-align: center; color: var(--text-main);">${u.bookmarksCount}</td>
           <td style="padding: 12px 10px; text-align: center; color: var(--warning);">${u.reviewCount}</td>
+          <td style="padding: 12px 10px; text-align: center; color: var(--text-main); font-weight: 500;">${formatDuration(u.timeSpent)}</td>
           <td style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(u.salt)}">${escapeHTML(shortSalt)}</td>
           <td style="padding: 12px 10px; font-family: var(--font-mono); font-size: 0.72rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(u.hash)}">${escapeHTML(shortHash)}</td>
+          <td style="padding: 12px 10px; text-align: center;">
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;" onclick="viewUserDetails('${escapeHTML(u.username)}')">
+              <i class="fa-solid fa-address-card"></i> Profile
+            </button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -2597,9 +2662,85 @@ async function fetchAdminUsers() {
     console.error(error);
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">Failed to retrieve user accounts from server.</td>
+        <td colspan="9" style="text-align: center; padding: 20px; color: var(--danger);">Failed to retrieve user accounts from server.</td>
       </tr>
     `;
   }
 }
+
+window.viewUserDetails = function(username) {
+  const users = window.lastFetchedAdminUsers || [];
+  const user = users.find(u => u.username === username);
+  if (!user) {
+    showToast('Failed to find user profile details.', 'error');
+    return;
+  }
+
+  document.getElementById('modal-details-username').textContent = user.username;
+  document.getElementById('modal-details-time').textContent = formatDuration(user.timeSpent);
+  document.getElementById('modal-details-solved-count').textContent = `${user.masteredCount} / ${state.questions.length}`;
+  document.getElementById('modal-details-bookmarks-count').textContent = user.bookmarksCount;
+  document.getElementById('modal-details-review-count').textContent = user.reviewCount;
+
+  document.getElementById('modal-details-solved-title-count').textContent = user.masteredCount;
+  document.getElementById('modal-details-bookmarks-title-count').textContent = user.bookmarksCount;
+
+  // Build Solved list
+  const solvedList = document.getElementById('modal-details-solved-list');
+  solvedList.innerHTML = '';
+  if (user.mastered.length === 0) {
+    solvedList.innerHTML = '<p class="empty-msg" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem; padding: 10px 5px;">No questions solved yet.</p>';
+  } else {
+    user.mastered.forEach(id => {
+      const q = state.questions.find(item => item.id === id);
+      const title = q ? q.question : `Question #${id}`;
+      const difficulty = q ? q.difficulty : '';
+      const diffClass = q ? q.difficulty.toLowerCase() : '';
+      
+      const item = document.createElement('div');
+      item.className = 'modal-list-item';
+      item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border-light); font-size: 0.82rem; color: var(--text-main);';
+      item.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%;">
+          <span style="font-weight: 700; color: var(--color-primary); min-width: 40px;">Q${id}</span>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(title)}">${escapeHTML(title)}</span>
+        </div>
+        ${difficulty ? `<span class="badge badge-difficulty ${diffClass}" style="font-size: 0.68rem; padding: 2px 6px;">${difficulty}</span>` : ''}
+      `;
+      solvedList.appendChild(item);
+    });
+  }
+
+  // Build Bookmarks list
+  const bookmarksList = document.getElementById('modal-details-bookmarks-list');
+  bookmarksList.innerHTML = '';
+  if (user.bookmarks.length === 0) {
+    bookmarksList.innerHTML = '<p class="empty-msg" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem; padding: 10px 5px;">No bookmarks saved yet.</p>';
+  } else {
+    user.bookmarks.forEach(id => {
+      const q = state.questions.find(item => item.id === id);
+      const title = q ? q.question : `Question #${id}`;
+      const difficulty = q ? q.difficulty : '';
+      const diffClass = q ? q.difficulty.toLowerCase() : '';
+
+      const item = document.createElement('div');
+      item.className = 'modal-list-item';
+      item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border-light); font-size: 0.82rem; color: var(--text-main);';
+      item.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%;">
+          <span style="font-weight: 700; color: var(--color-secondary); min-width: 40px;">Q${id}</span>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(title)}">${escapeHTML(title)}</span>
+        </div>
+        ${difficulty ? `<span class="badge badge-difficulty ${diffClass}" style="font-size: 0.68rem; padding: 2px 6px;">${difficulty}</span>` : ''}
+      `;
+      bookmarksList.appendChild(item);
+    });
+  }
+
+  document.getElementById('admin-user-details-modal').classList.remove('hidden');
+};
+
+window.closeAdminDetailsModal = function() {
+  document.getElementById('admin-user-details-modal').classList.add('hidden');
+};
 

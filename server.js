@@ -129,7 +129,8 @@ app.post('/api/auth/signup', (req, res) => {
     role: 'user',
     bookmarks: [],
     mastered: [],
-    review: []
+    review: [],
+    timeSpent: 0
   };
 
   users.push(newUser);
@@ -178,7 +179,8 @@ app.post('/api/auth/login', (req, res) => {
       progress: {
         bookmarks: user.bookmarks || [],
         mastered: user.mastered || [],
-        review: user.review || []
+        review: user.review || [],
+        timeSpent: user.timeSpent || 0
       }
     });
   } else {
@@ -196,7 +198,7 @@ app.get('/api/user/progress', authenticateToken, (req, res) => {
   if (!user) {
     // If it's the admin, progress isn't tracked or stored separately, but let's return empty arrays
     if (req.user.role === 'admin') {
-      return res.json({ bookmarks: [], mastered: [], review: [] });
+      return res.json({ bookmarks: [], mastered: [], review: [], timeSpent: 0 });
     }
     return res.status(404).json({ error: 'User profile not found.' });
   }
@@ -204,12 +206,13 @@ app.get('/api/user/progress', authenticateToken, (req, res) => {
   res.json({
     bookmarks: user.bookmarks || [],
     mastered: user.mastered || [],
-    review: user.review || []
+    review: user.review || [],
+    timeSpent: user.timeSpent || 0
   });
 });
 
 app.post('/api/user/progress', authenticateToken, (req, res) => {
-  const { bookmarks, mastered, review } = req.body;
+  const { bookmarks, mastered, review, timeSpent } = req.body;
   
   if (!Array.isArray(bookmarks) || !Array.isArray(mastered) || !Array.isArray(review)) {
     return res.status(400).json({ error: 'Progress data must contain arrays of question IDs.' });
@@ -228,6 +231,9 @@ app.post('/api/user/progress', authenticateToken, (req, res) => {
   users[index].bookmarks = bookmarks;
   users[index].mastered = mastered;
   users[index].review = review;
+  if (typeof timeSpent === 'number') {
+    users[index].timeSpent = timeSpent;
+  }
 
   if (writeUsers(users)) {
     res.json({ success: true });
@@ -249,7 +255,11 @@ app.get('/api/admin/users', authenticateToken, (req, res) => {
     hash: u.hash,
     bookmarksCount: (u.bookmarks || []).length,
     masteredCount: (u.mastered || []).length,
-    reviewCount: (u.review || []).length
+    reviewCount: (u.review || []).length,
+    timeSpent: u.timeSpent || 0,
+    bookmarks: u.bookmarks || [],
+    mastered: u.mastered || [],
+    review: u.review || []
   }));
   res.json(usersData);
 });
