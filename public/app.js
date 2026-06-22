@@ -37,7 +37,8 @@ const schemaMeta = {
     { name: 'Age', type: 'INTEGER', key: false },
     { name: 'Title', type: 'VARCHAR(50)', key: false },
     { name: 'HireDate', type: 'DATE', key: false },
-    { name: 'Status', type: 'VARCHAR(20)', key: false }
+    { name: 'Status', type: 'VARCHAR(20)', key: false },
+    { name: 'BranchID', type: 'INTEGER', key: false }
   ],
   Departments: [
     { name: 'DepartmentID', type: 'INTEGER', key: true },
@@ -117,6 +118,164 @@ const schemaMeta = {
     { name: 'id', type: 'INTEGER', key: true },
     { name: 'username', type: 'VARCHAR(50)', key: false },
     { name: 'email', type: 'VARCHAR(100)', key: false }
+  ],
+  Accounts: [
+    { name: 'AccountID', type: 'INTEGER', key: true },
+    { name: 'CustomerID', type: 'INTEGER', key: false },
+    { name: 'AccountType', type: 'VARCHAR(50)', key: false },
+    { name: 'Balance', type: 'DECIMAL(12,2)', key: false }
+  ],
+  Books: [
+    { name: 'BookID', type: 'INTEGER', key: true },
+    { name: 'Title', type: 'VARCHAR(255)', key: false }
+  ],
+  Borrowed_Books: [
+    { name: 'BorrowID', type: 'INTEGER', key: true },
+    { name: 'BookID', type: 'INTEGER', key: false },
+    { name: 'StudentID', type: 'INTEGER', key: false },
+    { name: 'BorrowDate', type: 'DATE', key: false }
+  ],
+  Branches: [
+    { name: 'BranchID', type: 'INTEGER', key: true },
+    { name: 'BranchName', type: 'VARCHAR(100)', key: false },
+    { name: 'City', type: 'VARCHAR(100)', key: false },
+    { name: 'Revenue', type: 'DECIMAL(15,2)', key: false },
+    { name: 'Region', type: 'VARCHAR(50)', key: false },
+    { name: 'DeptID', type: 'INTEGER', key: false }
+  ],
+  Competitors: [
+    { name: 'CompetitorID', type: 'INTEGER', key: true },
+    { name: 'CompetitorName', type: 'VARCHAR(100)', key: false },
+    { name: 'DeliveryDays', type: 'INTEGER', key: false }
+  ],
+  Courses: [
+    { name: 'CourseID', type: 'INTEGER', key: true },
+    { name: 'CourseName', type: 'VARCHAR(100)', key: false }
+  ],
+  DailyRevenue: [
+    { name: 'SaleDate', type: 'DATE', key: true },
+    { name: 'Revenue', type: 'DECIMAL(12,2)', key: false }
+  ],
+  DailySales: [
+    { name: 'SaleDate', type: 'DATE', key: true },
+    { name: 'Amount', type: 'DECIMAL(12,2)', key: false }
+  ],
+  Delivery_Partners: [
+    { name: 'PartnerID', type: 'INTEGER', key: true },
+    { name: 'PartnerName', type: 'VARCHAR(100)', key: false }
+  ],
+  Doctors: [
+    { name: 'DoctorID', type: 'INTEGER', key: true },
+    { name: 'DoctorName', type: 'VARCHAR(100)', key: false },
+    { name: 'HospitalID', type: 'INTEGER', key: false }
+  ],
+  EmployeeAuditLogs: [
+    { name: 'AuditLogID', type: 'INTEGER', key: true },
+    { name: 'EmployeeID', type: 'INTEGER', key: false },
+    { name: 'Action', type: 'VARCHAR(50)', key: false },
+    { name: 'LogDate', type: 'DATETIME', key: false }
+  ],
+  employees_temp: [
+    { name: 'id', type: 'INTEGER', key: true },
+    { name: 'name', type: 'VARCHAR(50)', key: false },
+    { name: 'salary', type: 'FLOAT', key: false },
+    { name: 'joining_date', type: 'DATE', key: false },
+    { name: 'department', type: 'VARCHAR(30)', key: false }
+  ],
+  Enrollments: [
+    { name: 'EnrollmentID', type: 'INTEGER', key: true },
+    { name: 'StudentID', type: 'INTEGER', key: false },
+    { name: 'CourseID', type: 'INTEGER', key: false },
+    { name: 'Marks', type: 'INTEGER', key: false },
+    { name: 'Section', type: 'VARCHAR(10)', key: false }
+  ],
+  Exam_Slots: [
+    { name: 'SlotID', type: 'INTEGER', key: true },
+    { name: 'SlotName', type: 'VARCHAR(50)', key: false }
+  ],
+  Flights: [
+    { name: 'FlightNumber', type: 'VARCHAR(20)', key: true },
+    { name: 'Origin', type: 'VARCHAR(50)', key: false },
+    { name: 'Destination', type: 'VARCHAR(50)', key: false }
+  ],
+  Hospitals: [
+    { name: 'HospitalID', type: 'INTEGER', key: true },
+    { name: 'HospitalName', type: 'VARCHAR(100)', key: false }
+  ],
+  Locations: [
+    { name: 'LocationID', type: 'INTEGER', key: true },
+    { name: 'LocationName', type: 'VARCHAR(100)', key: false }
+  ],
+  Logins: [
+    { name: 'LoginID', type: 'INTEGER', key: true },
+    { name: 'UserID', type: 'INTEGER', key: false },
+    { name: 'LoginTime', type: 'DATETIME', key: false }
+  ],
+  MonthlyFinance: [
+    { name: 'Month', type: 'VARCHAR(7)', key: true },
+    { name: 'Profit', type: 'DECIMAL(12,2)', key: false }
+  ],
+  PromotionHistory: [
+    { name: 'PromotionID', type: 'INTEGER', key: true },
+    { name: 'EmployeeID', type: 'INTEGER', key: false },
+    { name: 'CurrentRole', type: 'VARCHAR(50)', key: false },
+    { name: 'PromotedDate', type: 'DATE', key: false }
+  ],
+  Restaurants: [
+    { name: 'RestaurantID', type: 'INTEGER', key: true },
+    { name: 'RestaurantName', type: 'VARCHAR(100)', key: false }
+  ],
+  SalaryHistory: [
+    { name: 'HistoryID', type: 'INTEGER', key: true },
+    { name: 'EmployeeID', type: 'INTEGER', key: false },
+    { name: 'OldSalary', type: 'DECIMAL(12,2)', key: false },
+    { name: 'NewSalary', type: 'DECIMAL(12,2)', key: false },
+    { name: 'ChangedAt', type: 'DATETIME', key: false }
+  ],
+  Sales: [
+    { name: 'SaleID', type: 'INTEGER', key: true },
+    { name: 'StoreID', type: 'INTEGER', key: false },
+    { name: 'SaleDate', type: 'DATE', key: false },
+    { name: 'Amount', type: 'DECIMAL(12,2)', key: false }
+  ],
+  Seats: [
+    { name: 'SeatNumber', type: 'VARCHAR(10)', key: true },
+    { name: 'Class', type: 'VARCHAR(20)', key: false }
+  ],
+  Shifts: [
+    { name: 'ShiftID', type: 'INTEGER', key: true },
+    { name: 'ShiftDate', type: 'DATE', key: false },
+    { name: 'Status', type: 'VARCHAR(20)', key: false }
+  ],
+  Students: [
+    { name: 'StudentID', type: 'INTEGER', key: true },
+    { name: 'StudentName', type: 'VARCHAR(100)', key: false }
+  ],
+  students_temp: [
+    { name: 'id', type: 'INTEGER', key: true },
+    { name: 'name', type: 'VARCHAR(50)', key: false },
+    { name: 'age', type: 'INTEGER', key: false },
+    { name: 'city', type: 'VARCHAR(30)', key: false }
+  ],
+  Transactions: [
+    { name: 'TransactionID', type: 'INTEGER', key: true },
+    { name: 'AccountID', type: 'INTEGER', key: false },
+    { name: 'Amount', type: 'DECIMAL(12,2)', key: false },
+    { name: 'TransactionDate', type: 'DATETIME', key: false }
+  ],
+  UserActivity: [
+    { name: 'ActivityID', type: 'INTEGER', key: true },
+    { name: 'UserID', type: 'INTEGER', key: false },
+    { name: 'ActivityTime', type: 'DATETIME', key: false }
+  ],
+  UserLogins: [
+    { name: 'LoginLogID', type: 'INTEGER', key: true },
+    { name: 'UserID', type: 'INTEGER', key: false },
+    { name: 'LoginTimestamp', type: 'DATETIME', key: false }
+  ],
+  Vendors: [
+    { name: 'VendorID', type: 'INTEGER', key: true },
+    { name: 'VendorName', type: 'VARCHAR(100)', key: false }
   ]
 };
 
@@ -283,6 +442,7 @@ function seedSQLiteDatabase() {
       Title VARCHAR(50),
       HireDate DATE,
       Status VARCHAR(20),
+      BranchID INTEGER,
       FOREIGN KEY (DepartmentID) REFERENCES Departments(DepartmentID)
     );
     
@@ -377,6 +537,207 @@ function seedSQLiteDatabase() {
       username VARCHAR(50),
       email VARCHAR(100)
     );
+
+    /* 31 Missing Tables Creation */
+    CREATE TABLE Accounts (
+      AccountID INTEGER PRIMARY KEY,
+      CustomerID INTEGER,
+      AccountType VARCHAR(50),
+      Balance DECIMAL(12,2),
+      FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+    );
+
+    CREATE TABLE Books (
+      BookID INTEGER PRIMARY KEY,
+      Title VARCHAR(255)
+    );
+
+    CREATE TABLE Borrowed_Books (
+      BorrowID INTEGER PRIMARY KEY,
+      BookID INTEGER,
+      StudentID INTEGER,
+      BorrowDate DATE,
+      FOREIGN KEY (BookID) REFERENCES Books(BookID),
+      FOREIGN KEY (StudentID) REFERENCES Students(StudentID)
+    );
+
+    CREATE TABLE Branches (
+      BranchID INTEGER PRIMARY KEY,
+      BranchName VARCHAR(100),
+      City VARCHAR(100),
+      Revenue DECIMAL(15,2),
+      Region VARCHAR(50),
+      DeptID INTEGER,
+      FOREIGN KEY (DeptID) REFERENCES Departments(DepartmentID)
+    );
+
+    CREATE TABLE Competitors (
+      CompetitorID INTEGER PRIMARY KEY,
+      CompetitorName VARCHAR(100),
+      DeliveryDays INTEGER
+    );
+
+    CREATE TABLE Courses (
+      CourseID INTEGER PRIMARY KEY,
+      CourseName VARCHAR(100)
+    );
+
+    CREATE TABLE DailyRevenue (
+      SaleDate DATE PRIMARY KEY,
+      Revenue DECIMAL(12,2)
+    );
+
+    CREATE TABLE DailySales (
+      SaleDate DATE PRIMARY KEY,
+      Amount DECIMAL(12,2)
+    );
+
+    CREATE TABLE Delivery_Partners (
+      PartnerID INTEGER PRIMARY KEY,
+      PartnerName VARCHAR(100)
+    );
+
+    CREATE TABLE Doctors (
+      DoctorID INTEGER PRIMARY KEY,
+      DoctorName VARCHAR(100),
+      HospitalID INTEGER,
+      FOREIGN KEY (HospitalID) REFERENCES Hospitals(HospitalID)
+    );
+
+    CREATE TABLE EmployeeAuditLogs (
+      AuditLogID INTEGER PRIMARY KEY AUTOINCREMENT,
+      EmployeeID INTEGER,
+      Action VARCHAR(50),
+      LogDate DATETIME,
+      FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
+    );
+
+    CREATE TABLE employees_temp (
+      id INT PRIMARY KEY,
+      name VARCHAR(50),
+      salary FLOAT,
+      joining_date DATE,
+      department VARCHAR(30)
+    );
+
+    CREATE TABLE Enrollments (
+      EnrollmentID INTEGER PRIMARY KEY AUTOINCREMENT,
+      StudentID INTEGER,
+      CourseID INTEGER,
+      Marks INTEGER,
+      Section VARCHAR(10),
+      FOREIGN KEY (StudentID) REFERENCES Students(StudentID),
+      FOREIGN KEY (CourseID) REFERENCES Courses(CourseID)
+    );
+
+    CREATE TABLE Exam_Slots (
+      SlotID INTEGER PRIMARY KEY,
+      SlotName VARCHAR(50)
+    );
+
+    CREATE TABLE Flights (
+      FlightNumber VARCHAR(20) PRIMARY KEY,
+      Origin VARCHAR(50),
+      Destination VARCHAR(50)
+    );
+
+    CREATE TABLE Hospitals (
+      HospitalID INTEGER PRIMARY KEY,
+      HospitalName VARCHAR(100)
+    );
+
+    CREATE TABLE Locations (
+      LocationID INTEGER PRIMARY KEY,
+      LocationName VARCHAR(100) UNIQUE
+    );
+
+    CREATE TABLE Logins (
+      LoginID INTEGER PRIMARY KEY AUTOINCREMENT,
+      UserID INTEGER,
+      LoginTime DATETIME
+    );
+
+    CREATE TABLE MonthlyFinance (
+      Month VARCHAR(7) PRIMARY KEY,
+      Profit DECIMAL(12,2)
+    );
+
+    CREATE TABLE PromotionHistory (
+      PromotionID INTEGER PRIMARY KEY AUTOINCREMENT,
+      EmployeeID INTEGER,
+      CurrentRole VARCHAR(50),
+      PromotedDate DATE,
+      FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
+    );
+
+    CREATE TABLE Restaurants (
+      RestaurantID INTEGER PRIMARY KEY,
+      RestaurantName VARCHAR(100)
+    );
+
+    CREATE TABLE SalaryHistory (
+      HistoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+      EmployeeID INTEGER,
+      OldSalary DECIMAL(12,2),
+      NewSalary DECIMAL(12,2),
+      ChangedAt DATETIME,
+      FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
+    );
+
+    CREATE TABLE Sales (
+      SaleID INTEGER PRIMARY KEY AUTOINCREMENT,
+      StoreID INTEGER,
+      SaleDate DATE,
+      Amount DECIMAL(12,2)
+    );
+
+    CREATE TABLE Seats (
+      SeatNumber VARCHAR(10) PRIMARY KEY,
+      Class VARCHAR(20)
+    );
+
+    CREATE TABLE Shifts (
+      ShiftID INTEGER PRIMARY KEY,
+      ShiftDate DATE,
+      Status VARCHAR(20)
+    );
+
+    CREATE TABLE Students (
+      StudentID INTEGER PRIMARY KEY,
+      StudentName VARCHAR(100)
+    );
+
+    CREATE TABLE students_temp (
+      id INT PRIMARY KEY,
+      name VARCHAR(50) NOT NULL,
+      age INT CHECK (age >= 18),
+      city VARCHAR(30) DEFAULT 'Delhi'
+    );
+
+    CREATE TABLE Transactions (
+      TransactionID INTEGER PRIMARY KEY,
+      AccountID INTEGER,
+      Amount DECIMAL(12,2),
+      TransactionDate DATETIME,
+      FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID)
+    );
+
+    CREATE TABLE UserActivity (
+      ActivityID INTEGER PRIMARY KEY AUTOINCREMENT,
+      UserID INTEGER,
+      ActivityTime DATETIME
+    );
+
+    CREATE TABLE UserLogins (
+      LoginLogID INTEGER PRIMARY KEY AUTOINCREMENT,
+      UserID INTEGER,
+      LoginTimestamp DATETIME
+    );
+
+    CREATE TABLE Vendors (
+      VendorID INTEGER PRIMARY KEY,
+      VendorName VARCHAR(100)
+    );
   `);
   
   db.run(`
@@ -388,15 +749,15 @@ function seedSQLiteDatabase() {
     (5, 'Marketing', 'Bangalore');
     
     INSERT INTO Employees VALUES 
-    (1, 'John Doe', 'John', 'Doe', 1, NULL, 95000.00, 42, 'Director', '2018-01-15', 'Active'),
-    (2, 'David Smith', 'David', 'Smith', 1, 1, 80000.00, 31, 'Manager', '2020-03-10', 'Active'),
-    (3, 'Sarah Connor', 'Sarah', 'Connor', 2, NULL, 75000.00, 35, 'Sales Head', '2019-06-01', 'Active'),
-    (4, 'Michael Scott', 'Michael', 'Scott', 2, 3, 55000.00, 45, 'SalesRep', '2021-11-20', 'Active'),
-    (5, 'Pam Beesly', 'Pam', 'Beesly', 3, NULL, 48000.00, 29, 'HR Coordinator', '2020-08-15', 'Active'),
-    (6, 'Angela Martin', 'Angela', 'Martin', 4, NULL, 68000.00, 38, 'Senior Accountant', '2017-05-12', 'Active'),
-    (7, 'Jim Halpert', 'Jim', 'Halpert', 2, 3, 62000.00, 32, 'SalesRep', '2020-02-14', 'Active'),
-    (8, 'Ryan Howard', 'Ryan', 'Howard', 5, NULL, 40000.00, 26, 'Temp', '2022-09-01', 'Inactive'),
-    (9, 'Kelly Kapoor', 'Kelly', 'Kapoor', 5, 8, 45000.00, 28, 'Customer Relations', '2021-04-10', 'Active');
+    (1, 'John Doe', 'John', 'Doe', 1, NULL, 95000.00, 42, 'Director', '2018-01-15', 'Active', 1),
+    (2, 'David Smith', 'David', 'Smith', 1, 1, 80000.00, 31, 'Manager', '2020-03-10', 'Active', 1),
+    (3, 'Sarah Connor', 'Sarah', 'Connor', 2, NULL, 75000.00, 35, 'Sales Head', '2019-06-01', 'Active', 2),
+    (4, 'Michael Scott', 'Michael', 'Scott', 2, 3, 55000.00, 45, 'SalesRep', '2021-11-20', 'Active', 2),
+    (5, 'Pam Beesly', 'Pam', 'Beesly', 3, NULL, 48000.00, 29, 'HR Coordinator', '2020-08-15', 'Active', 3),
+    (6, 'Angela Martin', 'Angela', 'Martin', 4, NULL, 68000.00, 38, 'Senior Accountant', '2017-05-12', 'Active', 4),
+    (7, 'Jim Halpert', 'Jim', 'Halpert', 2, 3, 62000.00, 32, 'SalesRep', '2020-02-14', 'Active', 2),
+    (8, 'Ryan Howard', 'Ryan', 'Howard', 5, NULL, 40000.00, 26, 'Temp', '2022-09-01', 'Inactive', 5),
+    (9, 'Kelly Kapoor', 'Kelly', 'Kapoor', 5, 8, 45000.00, 28, 'Customer Relations', '2021-04-10', 'Active', 5);
     
     INSERT INTO Customers VALUES 
     (101, 'Acme Corp', 'contact@acme.com', 'Mumbai', 'West', 4, 'Active', '2025-05-15'),
@@ -474,6 +835,185 @@ function seedSQLiteDatabase() {
     ('john_dup', 'kanna@example.com'),
     ('dave_dup', 'adarsh@example.com'),
     ('sarah', 'sarah@example.com');
+
+    /* Seeding values for 31 Missing Tables */
+    INSERT INTO Branches VALUES
+    (1, 'Mumbai Branch', 'Mumbai', 550000.00, 'West', 1),
+    (2, 'Pune Branch', 'Pune', 380000.00, 'West', 2),
+    (3, 'Delhi Branch', 'Delhi', 240000.00, 'North', 3),
+    (4, 'Bangalore Branch', 'Bangalore', 420000.00, 'South', 5),
+    (5, 'Kolkata Branch', 'Kolkata', 180000.00, 'East', 4);
+
+    INSERT INTO Accounts VALUES
+    (1001, 101, 'Savings', 50000.00),
+    (1002, 101, 'Current', 120000.00),
+    (1003, 102, 'Savings', 15000.00),
+    (1004, 103, 'Checking', 8500.00),
+    (1005, 104, 'Savings', 95000.00),
+    (1006, 105, 'Current', 43000.00);
+
+    INSERT INTO Books VALUES
+    (1, 'The Great Gatsby'),
+    (2, 'To Kill a Mockingbird'),
+    (3, '1984'),
+    (4, 'Moby Dick'),
+    (5, 'The Catcher in the Rye');
+
+    INSERT INTO Students VALUES
+    (1, 'Adarsh'),
+    (2, 'Rahul'),
+    (3, 'Amit'),
+    (4, 'Student Z'),
+    (5, 'Kanna');
+
+    INSERT INTO Borrowed_Books VALUES
+    (2001, 1, 1, '2025-05-10'),
+    (2002, 3, 2, '2025-06-01'),
+    (2003, 2, 4, '2025-06-15');
+
+    INSERT INTO Competitors VALUES
+    (1, 'Logistics Corp', 5),
+    (2, 'FastShip Ltd', 8),
+    (3, 'Global Express', 4);
+
+    INSERT INTO Courses VALUES
+    (101, 'SQL 101'),
+    (102, 'Advanced Databases'),
+    (103, 'Web Development'),
+    (104, 'System Design');
+
+    INSERT INTO DailyRevenue VALUES
+    ('2026-06-01', 1200.00),
+    ('2026-06-02', 1500.00),
+    ('2026-06-03', 900.00),
+    ('2026-06-04', 1800.00),
+    ('2026-06-05', 2100.00);
+
+    INSERT INTO DailySales VALUES
+    ('2026-06-01', 500.00),
+    ('2026-06-02', 750.00),
+    ('2026-06-03', 600.00),
+    ('2026-06-04', 1100.00),
+    ('2026-06-05', 950.00);
+
+    INSERT INTO Delivery_Partners VALUES
+    (50, 'Zomato'),
+    (51, 'Swiggy'),
+    (52, 'Dunzo');
+
+    INSERT INTO Hospitals VALUES
+    (1, 'Lilavati Hospital'),
+    (2, 'Fortis Hospital'),
+    (3, 'Max Healthcare');
+
+    INSERT INTO Doctors VALUES
+    (1, 'Dr. Smith', 1),
+    (2, 'Dr. Jones', 1),
+    (3, 'Dr. Williams', 2),
+    (4, 'Dr. Brown', 3);
+
+    INSERT INTO employees_temp (id, name, salary, joining_date, department) VALUES
+    (1, 'Adarsh', 50000.0, '2024-01-10', 'IT'),
+    (2, 'Rahul', 60000.0, '2023-05-20', 'Sales'),
+    (3, 'Amit', 55000.0, '2022-03-15', 'HR');
+
+    INSERT INTO Enrollments (EnrollmentID, StudentID, CourseID, Marks, Section) VALUES
+    (1, 1, 101, 85, 'A'),
+    (2, 2, 101, 92, 'A'),
+    (3, 3, 102, 78, 'B'),
+    (4, 4, 103, 90, 'C'),
+    (5, 5, 101, 88, 'C');
+
+    INSERT INTO Exam_Slots VALUES
+    (1, 'Morning Slot'),
+    (2, 'Afternoon Slot'),
+    (3, 'Evening Slot');
+
+    INSERT INTO Flights VALUES
+    ('AI301', 'Mumbai', 'Delhi'),
+    ('EK502', 'Mumbai', 'Dubai'),
+    ('LH703', 'Delhi', 'Frankfurt');
+
+    INSERT INTO Locations VALUES
+    (1, 'Mumbai'),
+    (2, 'Pune'),
+    (3, 'Delhi'),
+    (4, 'Bangalore'),
+    (5, 'Kolkata'),
+    (6, 'Chennai');
+
+    INSERT INTO Logins (UserID, LoginTime) VALUES
+    (1, '2026-06-01 09:00:00'),
+    (1, '2026-06-02 10:15:00'),
+    (2, '2026-06-01 08:30:00'),
+    (3, '2026-06-01 11:00:00');
+
+    INSERT INTO MonthlyFinance VALUES
+    ('2025-01', 50000.00),
+    ('2025-02', 62000.00),
+    ('2025-03', 58000.00),
+    ('2025-04', 70000.00),
+    ('2025-05', 85000.00);
+
+    INSERT INTO PromotionHistory (EmployeeID, CurrentRole, PromotedDate) VALUES
+    (2, 'Senior Developer', '2022-01-15'),
+    (2, 'Manager', '2024-03-10'),
+    (4, 'SalesRep', '2021-11-20'),
+    (7, 'Senior SalesRep', '2023-05-01');
+
+    INSERT INTO Restaurants VALUES
+    (10, 'Taj Dining'),
+    (11, 'Pizza Corner'),
+    (12, 'Burger Club');
+
+    INSERT INTO Sales (StoreID, SaleDate, Amount) VALUES
+    (1, '2025-01-10', 500.00),
+    (1, '2025-02-10', 600.00),
+    (1, '2025-03-10', 700.00),
+    (1, '2025-04-10', 800.00),
+    (1, '2025-05-10', 900.00),
+    (1, '2025-06-10', 1000.00),
+    (1, '2025-07-10', 1100.00);
+
+    INSERT INTO Seats VALUES
+    ('1A', 'First Class'),
+    ('1B', 'First Class'),
+    ('10A', 'Economy'),
+    ('12F', 'Economy');
+
+    INSERT INTO Shifts VALUES
+    (1, '2026-06-01', 'Active'),
+    (2, '2026-06-02', 'Active'),
+    (3, '2026-06-03', 'Active'),
+    (4, '2026-06-04', 'Inactive');
+
+    INSERT INTO students_temp VALUES
+    (1, 'Rajesh', 20, 'Delhi'),
+    (2, 'Suresh', 22, 'Delhi'),
+    (3, 'Ramesh', 19, 'Mumbai');
+
+    INSERT INTO Transactions VALUES
+    (3001, 1001, -2000.00, '2025-01-12 14:00:00'),
+    (3002, 1001, 5000.00, '2025-01-15 09:30:00'),
+    (3003, 1002, 10000.00, '2025-02-01 11:00:00'),
+    (3004, 1003, -1500.00, '2025-02-18 16:45:00');
+
+    INSERT INTO UserActivity (UserID, ActivityTime) VALUES
+    (1, '2026-06-01 10:00:00'),
+    (1, '2026-06-01 10:15:00'),
+    (1, '2026-06-01 10:50:00'),
+    (2, '2026-06-01 11:00:00');
+
+    INSERT INTO UserLogins (UserID, LoginTimestamp) VALUES
+    (1, '2026-06-01 09:00:00'),
+    (1, '2026-06-02 09:15:00'),
+    (2, '2026-06-01 08:30:00');
+
+    INSERT INTO Vendors VALUES
+    (201, 'Vendor Alpha'),
+    (202, 'Vendor Beta'),
+    (203, 'Vendor Gamma'),
+    (204, 'Vendor Delta');
   `);
 }
 
