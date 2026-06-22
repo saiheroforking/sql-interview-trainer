@@ -27,44 +27,60 @@ function generateSalt() {
   return crypto.randomBytes(16).toString('hex');
 }
 
+// In-memory cache fallbacks for serverless environments
+let inMemoryQuestions = null;
+let inMemoryUsers = null;
+
 // Helper to read database files
 function readQuestions() {
+  if (inMemoryQuestions !== null) {
+    return inMemoryQuestions;
+  }
   try {
     if (!fs.existsSync(QUESTIONS_FILE)) return [];
-    return JSON.parse(fs.readFileSync(QUESTIONS_FILE, 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(QUESTIONS_FILE, 'utf-8'));
+    inMemoryQuestions = data;
+    return data;
   } catch (error) {
     console.error('Error reading questions:', error);
-    return [];
+    return inMemoryQuestions || [];
   }
 }
 
 function writeQuestions(data) {
+  inMemoryQuestions = data;
   try {
     fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     return true;
   } catch (error) {
-    console.error('Error writing questions:', error);
-    return false;
+    console.warn('Warning: Write to questions.json failed. Using in-memory fallback.', error.message);
+    return true;
   }
 }
 
 function readUsers() {
+  if (inMemoryUsers !== null) {
+    return inMemoryUsers;
+  }
   try {
     if (!fs.existsSync(USERS_FILE)) return [];
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+    inMemoryUsers = data;
+    return data;
   } catch (error) {
     console.error('Error reading users:', error);
-    return [];
+    return inMemoryUsers || [];
   }
 }
 
 function writeUsers(data) {
+  inMemoryUsers = data;
   try {
     fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     return true;
   } catch (error) {
-    console.error('Error writing users:', error);
-    return false;
+    console.warn('Warning: Write to users.json failed. Using in-memory fallback.', error.message);
+    return true;
   }
 }
 
