@@ -67,7 +67,9 @@ async function kvRequest(command) {
   try {
     const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (!url || !token) return null;
+    if (!url || !token) {
+      return { success: false, error: 'KV environment variables not configured.' };
+    }
 
     const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
 
@@ -81,15 +83,14 @@ async function kvRequest(command) {
     });
     
     if (!response.ok) {
-      console.error('Vercel KV REST command failed:', response.statusText);
-      return null;
+      return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
     }
     
     const data = await response.json();
-    return data.result;
+    return { success: true, result: data.result };
   } catch (error) {
     console.error('Error in Vercel KV request:', error);
-    return null;
+    return { success: false, error: error.message };
   }
 }
 
@@ -123,20 +124,44 @@ async function writeQuestions(data) {
 async function readUsers() {
   const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  
   if (kvUrl && kvToken) {
-    const result = await kvRequest(['GET', 'users']);
-    if (result) {
-      try {
-        const parsed = JSON.parse(result);
-        inMemoryUsers = parsed;
-        return parsed;
-      } catch (err) {
-        console.error('Failed to parse users from Vercel KV:', err);
+    const res = await kvRequest(['GET', 'users']);
+    if (res.success) {
+      if (res.result !== null && res.result !== undefined) {
+        try {
+          const parsed = JSON.parse(res.result);
+          inMemoryUsers = parsed;
+          return parsed;
+        } catch (err) {
+          console.error('Failed to parse users from Vercel KV:', err);
+        }
+      } else {
+        // Key doesn't exist yet! Seed it from users.json once
+        console.log('Users key not found in KV. Seeding from local file...');
+        const localData = [];
+        if (fs.existsSync(USERS_FILE)) {
+          try {
+            const parsedLocal = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+            if (Array.isArray(parsedLocal)) {
+              localData.push(...parsedLocal);
+            }
+          } catch (err) {
+            console.error('Failed to read/parse local users.json:', err);
+          }
+        }
+        await writeUsers(localData);
+        inMemoryUsers = localData;
+        return localData;
       }
+    } else {
+      console.error('Failed to fetch users from Vercel KV:', res.error);
+      if (inMemoryUsers !== null) return inMemoryUsers;
+      return [];
     }
-    if (inMemoryUsers !== null) return inMemoryUsers;
   }
 
+  // If KV is not configured, fall back to local disk
   if (inMemoryUsers !== null) {
     return inMemoryUsers;
   }
@@ -156,50 +181,21 @@ async function writeUsers(data) {
 
   const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  
   if (kvUrl && kvToken) {
-    const success = await kvRequest(['SET', 'users', JSON.stringify(data)]);
-    if (success) {
+    const res = await kvRequest(['SET', 'users', JSON.stringify(data)]);
+    if (res.success) {
+      // Backup write to local disk (won't crash if read-only, we catch it)
+      try {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+      } catch (e) {
+        console.warn('Backup write to users.json failed:', e.message);
+      }
       return true;
     }
-    console.warn('Warning: Write to Vercel KV failed. Falling back.');
+    console.warn('Warning: Write to Vercel KV failed:', res.error);
   }
 
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.warn('Warning: Write to users.json failed. Using in-memory fallback.', error.message);
-    return true;
-  }
-}
-function writeQuestions(data) {
-  inMemoryQuestions = data;
-  try {
-    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.warn('Warning: Write to questions.json failed. Using in-memory fallback.', error.message);
-    return true;
-  }
-}
-
-function readUsers() {
-  if (inMemoryUsers !== null) {
-    return inMemoryUsers;
-  }
-  try {
-    if (!fs.existsSync(USERS_FILE)) return [];
-    const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-    inMemoryUsers = data;
-    return data;
-  } catch (error) {
-    console.error('Error reading users:', error);
-    return inMemoryUsers || [];
-  }
-}
-
-function writeUsers(data) {
-  inMemoryUsers = data;
   try {
     fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     return true;
@@ -446,6 +442,49 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
     sessions: u.sessions || []
   }));
   res.json(usersData);
+});
+
+app.get('/api/admin/status', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Administrative privileges required.' });
+  }
+
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!kvUrl || !kvToken) {
+    return res.json({
+      configured: false,
+      connected: false,
+      mode: 'Local Ephemeral (Disk-Backup Mode)',
+      maskedUrl: null,
+      error: 'Environment variables KV_REST_API_URL or UPSTASH_REDIS_REST_URL are not configured.'
+    });
+  }
+
+  // Mask URL for security
+  let maskedUrl = kvUrl;
+  try {
+    if (kvUrl.startsWith('http')) {
+      const parsedUrl = new URL(kvUrl);
+      maskedUrl = `${parsedUrl.protocol}//***${parsedUrl.hostname}`;
+    } else {
+      maskedUrl = kvUrl.substring(0, 10) + '...';
+    }
+  } catch (e) {
+    maskedUrl = kvUrl.substring(0, 10) + '...';
+  }
+
+  const pingTest = await kvRequest(['PING']);
+  const isOk = pingTest.success && (pingTest.result === 'PONG' || pingTest.result === 'OK' || pingTest.result === true || typeof pingTest.result === 'string');
+
+  res.json({
+    configured: true,
+    connected: !!isOk,
+    mode: 'Persistent Vercel KV / Upstash Redis',
+    maskedUrl: maskedUrl,
+    error: pingTest.success ? null : pingTest.error
+  });
 });
 
 app.post('/api/questions', authenticateToken, async (req, res) => {

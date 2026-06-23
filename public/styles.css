@@ -2175,3 +2175,36 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+.db-status-banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+
+.db-status-banner.persistent {
+  background: rgba(62, 207, 142, 0.08);
+  border-color: rgba(62, 207, 142, 0.2);
+  color: var(--color-primary);
+}
+
+.db-status-banner.ephemeral {
+  background: rgba(235, 87, 87, 0.08);
+  border-color: rgba(235, 87, 87, 0.25);
+  color: #eb5757;
+}
+
+.db-status-banner i {
+  font-size: 1.2rem;
+}
+
+.db-status-banner.hidden {
+  display: none !important;
+}
+

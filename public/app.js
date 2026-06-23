@@ -3150,12 +3150,84 @@ function formatDuration(seconds) {
   return result.trim();
 }
 
+async function checkDbConnectionStatus() {
+  const banner = document.getElementById('admin-db-status-banner');
+  if (!banner) return;
+
+  if (!state.token || state.role !== 'admin') {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/status', {
+      headers: {
+        'Authorization': `Bearer ${state.token}`
+      }
+    });
+    if (!res.ok) throw new Error('Status endpoint returned non-200');
+
+    const status = await res.json();
+    banner.classList.remove('hidden');
+    banner.className = 'db-status-banner'; // reset classes
+
+    if (status.connected) {
+      banner.classList.add('persistent');
+      banner.innerHTML = `
+        <i class="fa-solid fa-circle-check"></i>
+        <div>
+          <strong>Database Connected:</strong> Running in persistent mode using <strong>${escapeHTML(status.mode)}</strong>. 
+          Your users and progress are stored safely. (Endpoint: <code>${escapeHTML(status.maskedUrl)}</code>)
+        </div>
+      `;
+    } else if (status.configured) {
+      banner.classList.add('ephemeral');
+      banner.innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+          <strong>Database Connection Failed:</strong> Vercel KV / Upstash Redis is configured but <strong>failed to connect</strong>!
+          <br>
+          <span style="font-size: 0.78rem; opacity: 0.85;">Error: ${escapeHTML(status.error || 'Unknown error during PING test.')}</span>
+          <br>
+          <span style="font-size: 0.78rem; font-weight: bold;">Warning: Falling back to ephemeral local storage. User accounts will be lost on container restarts.</span>
+        </div>
+      `;
+    } else {
+      banner.classList.add('ephemeral');
+      banner.innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+          <strong>Database Ephemeral Mode:</strong> No persistent KV database connection found. 
+          <br>
+          <span style="font-size: 0.78rem; opacity: 0.85;">All registered users and practice progress will be deleted when the serverless container restarts.</span>
+          <br>
+          <span style="font-size: 0.78rem; font-weight: bold; text-decoration: underline;">Action Required:</span> 
+          Configure <code>KV_REST_API_URL</code> and <code>KV_REST_API_TOKEN</code> (or <code>UPSTASH_REDIS_REST_URL</code> and <code>UPSTASH_REDIS_REST_TOKEN</code>) in your Vercel project environment variables to enable persistent storage.
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Failed to check database connection status:', err);
+    banner.classList.remove('hidden');
+    banner.className = 'db-status-banner ephemeral';
+    banner.innerHTML = `
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <div>
+        <strong>Diagnostic Error:</strong> Failed to retrieve database connection status from the API.
+      </div>
+    `;
+  }
+}
+
 async function fetchAdminUsers() {
   const tbody = document.getElementById('admin-users-list-tbody');
   const countSpan = document.getElementById('admin-users-count');
   if (!tbody) return;
 
   if (!state.token || state.role !== 'admin') return;
+
+  // Check connection status in parallel
+  checkDbConnectionStatus();
 
   try {
     const response = await fetch('/api/admin/users', {
