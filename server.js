@@ -34,8 +34,8 @@ let inMemoryUsers = null;
 // Helper to perform REST API requests to Vercel KV if available
 async function kvRequest(command) {
   try {
-    const url = process.env.KV_REST_API_URL;
-    const token = process.env.KV_REST_API_TOKEN;
+    const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
     if (!url || !token) return null;
 
     const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
@@ -90,7 +90,9 @@ async function writeQuestions(data) {
 }
 
 async function readUsers() {
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
     const result = await kvRequest(['GET', 'users']);
     if (result) {
       try {
@@ -121,7 +123,9 @@ async function readUsers() {
 async function writeUsers(data) {
   inMemoryUsers = data;
 
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
     const success = await kvRequest(['SET', 'users', JSON.stringify(data)]);
     if (success) {
       return true;
