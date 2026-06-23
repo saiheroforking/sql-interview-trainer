@@ -2338,18 +2338,18 @@
   {
     "id": 293,
     "section": "Views & Stored Procedures",
-    "question": "Question 293: Solve SQL puzzle for Views & Stored Procedures scenario #293.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 293\nSELECT * FROM Employees WHERE DepartmentID = 4;",
-    "explanation": "Explanation 293: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a stored procedure named UpdateEmployeeSalary_Q293 that accepts an employee's ID and a new salary, and updates the salary in the Employees table.",
+    "difficulty": "Intermediate",
+    "answer": "CREATE PROCEDURE UpdateEmployeeSalary_Q293(IN empId INT, IN newSalary DECIMAL)\nBEGIN\n    UPDATE Employees SET Salary = newSalary WHERE EmployeeID = empId;\nEND;",
+    "explanation": "Defines a stored procedure to update the salary of a specific employee by their EmployeeID."
   },
   {
     "id": 294,
     "section": "Views & Stored Procedures",
-    "question": "Question 294: Solve SQL puzzle for Views & Stored Procedures scenario #294.",
-    "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 294\nSELECT * FROM Employees WHERE DepartmentID = 5;",
-    "explanation": "Explanation 294: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a view named vw_ProjectEmployeeCount that shows each project's name and the total number of employees assigned to it.",
+    "difficulty": "Intermediate",
+    "answer": "CREATE VIEW vw_ProjectEmployeeCount AS\nSELECT p.ProjectName, COUNT(ep.EmployeeID) AS EmployeeCount\nFROM Projects p\nLEFT JOIN Employee_Projects ep ON p.ProjectID = ep.ProjectID\nGROUP BY p.ProjectID, p.ProjectName;",
+    "explanation": "Creates a view by left-joining Projects and Employee_Projects, grouping by project, and counting the assigned employees."
   },
   {
     "id": 295,
@@ -2882,162 +2882,162 @@
   {
     "id": 361,
     "section": "Normalization & Indexing",
-    "question": "Question 361: Solve SQL puzzle for Normalization & Indexing scenario #361.",
-    "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 361\nSELECT * FROM Employees WHERE DepartmentID = 2;",
-    "explanation": "Explanation 361: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain First Normal Form (1NF) and how to resolve multi-valued attributes.",
+    "difficulty": "Easy",
+    "answer": "-- Concept Explanation:\n-- A table is in First Normal Form (1NF) if all columns contain atomic (indivisible) values\n-- and there are no repeating groups or multi-valued attributes.\n-- To resolve multi-valued attributes, move them to a separate table and link using a Foreign Key.",
+    "explanation": "1NF requires atomicity of column values and eliminates repeating groups by decomposing the table."
   },
   {
     "id": 362,
     "section": "Normalization & Indexing",
-    "question": "Question 362: Solve SQL puzzle for Normalization & Indexing scenario #362.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 362\nSELECT * FROM Employees WHERE DepartmentID = 3;",
-    "explanation": "Explanation 362: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain Second Normal Form (2NF) and the concept of partial dependencies.",
+    "difficulty": "Intermediate",
+    "answer": "-- Concept Explanation:\n-- A table is in Second Normal Form (2NF) if it is in 1NF and all non-key attributes are\n-- fully functionally dependent on the entire primary key (no partial dependencies).\n-- Partial dependency occurs when a non-key attribute depends on only part of a composite primary key.",
+    "explanation": "2NF eliminates partial dependencies where non-key attributes depend on a subset of a composite primary key."
   },
   {
     "id": 363,
     "section": "Normalization & Indexing",
-    "question": "Question 363: Solve SQL puzzle for Normalization & Indexing scenario #363.",
-    "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 363\nSELECT * FROM Employees WHERE DepartmentID = 4;",
-    "explanation": "Explanation 363: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain Third Normal Form (3NF) and how to eliminate transitive dependencies.",
+    "difficulty": "Intermediate",
+    "answer": "-- Concept Explanation:\n-- A table is in Third Normal Form (3NF) if it is in 2NF and has no transitive dependencies.\n-- Transitive dependency occurs when a non-prime attribute determines another non-prime attribute\n-- (e.g., A -> B and B -> C, therefore A -> C transitively).",
+    "explanation": "3NF prevents transitive dependencies to ensure every non-key column depends directly on the primary key."
   },
   {
     "id": 364,
     "section": "Normalization & Indexing",
-    "question": "Question 364: Solve SQL puzzle for Normalization & Indexing scenario #364.",
-    "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 364\nSELECT * FROM Employees WHERE DepartmentID = 5;",
-    "explanation": "Explanation 364: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain Boyce-Codd Normal Form (BCNF) and how it handles anomalies in tables with multiple candidate keys.",
+    "difficulty": "Hard",
+    "answer": "-- Concept Explanation:\n-- BCNF is a stronger version of 3NF. A table is in BCNF if for every non-trivial functional\n-- dependency X -> Y, X is a superkey. BCNF addresses cases where a non-prime attribute\n-- determines part of a composite candidate key.",
+    "explanation": "BCNF is a stricter normal form ensuring that every determinant in functional dependencies is a candidate key."
   },
   {
     "id": 365,
     "section": "Normalization & Indexing",
-    "question": "Question 365: Solve SQL puzzle for Normalization & Indexing scenario #365.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 365\nSELECT * FROM Employees WHERE DepartmentID = 1;",
-    "explanation": "Explanation 365: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a unique index named idx_customer_email_uniq on the Email column of the Customers table to prevent duplicate emails.",
+    "difficulty": "Easy",
+    "answer": "CREATE UNIQUE INDEX idx_customer_email_uniq ON Customers(Email);",
+    "explanation": "Creates a unique index ensuring all entries in the Email column are distinct."
   },
   {
     "id": 366,
     "section": "Normalization & Indexing",
-    "question": "Question 366: Solve SQL puzzle for Normalization & Indexing scenario #366.",
-    "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 366\nSELECT * FROM Employees WHERE DepartmentID = 2;",
-    "explanation": "Explanation 366: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a partial (filtered) index named idx_high_salary_employees on the Employees table for employees with a salary greater than 50,000.",
+    "difficulty": "Intermediate",
+    "answer": "CREATE INDEX idx_high_salary_employees ON Employees(Salary) WHERE Salary > 50000;",
+    "explanation": "Creates a partial index in SQLite, indexing only rows matching the WHERE filter clause to save space and boost selective queries."
   },
   {
     "id": 367,
     "section": "Normalization & Indexing",
-    "question": "Question 367: Solve SQL puzzle for Normalization & Indexing scenario #367.",
+    "question": "Create a composite index named idx_order_cust_date on both the CustomerID and OrderDate columns of the Orders table.",
     "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 367\nSELECT * FROM Employees WHERE DepartmentID = 3;",
-    "explanation": "Explanation 367: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "answer": "CREATE INDEX idx_order_cust_date ON Orders(CustomerID, OrderDate);",
+    "explanation": "Creates a composite index for optimizing queries that filter or sort by CustomerID and OrderDate."
   },
   {
     "id": 368,
     "section": "Normalization & Indexing",
-    "question": "Question 368: Solve SQL puzzle for Normalization & Indexing scenario #368.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 368\nSELECT * FROM Employees WHERE DepartmentID = 4;",
-    "explanation": "Explanation 368: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain foreign key constraints, including cascade delete and cascade update actions, and how they protect referential integrity.",
+    "difficulty": "Easy",
+    "answer": "-- Concept Explanation:\n-- A Foreign Key links a column in one table to a Primary Key in another.\n-- Referential integrity is maintained by rejecting orphan records.\n-- ON DELETE CASCADE deletes child records if the parent is deleted.\n-- ON UPDATE CASCADE updates child foreign keys if the parent key changes.",
+    "explanation": "Foreign keys enforce relationships between tables, ensuring child records reference valid parent records."
   },
   {
     "id": 369,
     "section": "Normalization & Indexing",
-    "question": "Question 369: Solve SQL puzzle for Normalization & Indexing scenario #369.",
+    "question": "Write a command to drop the index named idx_employee_id if it exists in the database.",
     "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 369\nSELECT * FROM Employees WHERE DepartmentID = 5;",
-    "explanation": "Explanation 369: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "answer": "DROP INDEX IF EXISTS idx_employee_id;",
+    "explanation": "Drops an index safely without throwing an error if the index does not exist."
   },
   {
     "id": 370,
     "section": "Normalization & Indexing",
-    "question": "Question 370: Solve SQL puzzle for Normalization & Indexing scenario #370.",
-    "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 370\nSELECT * FROM Employees WHERE DepartmentID = 1;",
-    "explanation": "Explanation 370: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create an index named idx_product_category on the CategoryID column of the Products table to optimize category-based queries and joins.",
+    "difficulty": "Easy",
+    "answer": "CREATE INDEX idx_product_category ON Products(CategoryID);",
+    "explanation": "Indexes the foreign key column CategoryID in Products, facilitating faster JOIN and GROUP BY operations."
   },
   {
     "id": 371,
     "section": "Normalization & Indexing",
-    "question": "Question 371: Solve SQL puzzle for Normalization & Indexing scenario #371.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 371\nSELECT * FROM Employees WHERE DepartmentID = 2;",
-    "explanation": "Explanation 371: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain the primary key constraint, how it is implemented physically (clustered index), and how it differs from a UNIQUE constraint.",
+    "difficulty": "Easy",
+    "answer": "-- Concept Explanation:\n-- A Primary Key uniquely identifies each row in a table. It cannot contain NULL values.\n-- Physically, it creates a clustered index sorting rows by the key.\n-- A UNIQUE constraint also enforces uniqueness but allows NULL values (usually one).",
+    "explanation": "Primary Keys enforce row identity and physically order the data, whereas Unique constraints allow single nulls and do not sort data."
   },
   {
     "id": 372,
     "section": "Normalization & Indexing",
-    "question": "Question 372: Solve SQL puzzle for Normalization & Indexing scenario #372.",
-    "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 372\nSELECT * FROM Employees WHERE DepartmentID = 3;",
-    "explanation": "Explanation 372: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a composite primary key on a new table ProjectMembers with columns ProjectID and EmployeeID to prevent duplicate membership.",
+    "difficulty": "Intermediate",
+    "answer": "CREATE TABLE ProjectMembers (\n    ProjectID INTEGER,\n    EmployeeID INTEGER,\n    Role VARCHAR(50),\n    PRIMARY KEY (ProjectID, EmployeeID)\n);",
+    "explanation": "Defines a junction table with a composite primary key composed of two foreign key columns."
   },
   {
     "id": 373,
     "section": "Normalization & Indexing",
-    "question": "Question 373: Solve SQL puzzle for Normalization & Indexing scenario #373.",
+    "question": "Explain the trade-offs of database normalization and when denormalization is preferred in high-scale systems.",
     "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 373\nSELECT * FROM Employees WHERE DepartmentID = 4;",
-    "explanation": "Explanation 373: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "answer": "-- Concept Explanation:\n-- Normalization reduces data redundancy and prevents update anomalies but requires more JOINs.\n-- Denormalization duplicates data or pre-aggregates columns to speed up read queries\n-- in high-read environments, trading write performance and storage for faster reads.",
+    "explanation": "Normalization optimizes write performance and integrity; denormalization optimizes read performance in reporting/analytics databases."
   },
   {
     "id": 374,
     "section": "Normalization & Indexing",
-    "question": "Question 374: Solve SQL puzzle for Normalization & Indexing scenario #374.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 374\nSELECT * FROM Employees WHERE DepartmentID = 5;",
-    "explanation": "Explanation 374: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain the difference between a B-Tree index and a Hash index, including the types of query operators they optimize.",
+    "difficulty": "Intermediate",
+    "answer": "-- Concept Explanation:\n-- B-Tree Index: Organizes keys in a balanced tree. Supports range queries (<, >, BETWEEN)\n-- and equality (=) comparisons. Sorted physically.\n-- Hash Index: Uses a hash function. Fast O(1) for equality (=) lookup but does not support range scans.",
+    "explanation": "B-Trees are general-purpose sorted index structures, while Hash indexes are highly specific for key-value exact lookups."
   },
   {
     "id": 375,
     "section": "Normalization & Indexing",
-    "question": "Question 375: Solve SQL puzzle for Normalization & Indexing scenario #375.",
+    "question": "Create an index named idx_order_date on the OrderDate column of the Orders table to speed up date range filtering.",
     "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 375\nSELECT * FROM Employees WHERE DepartmentID = 1;",
-    "explanation": "Explanation 375: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "answer": "CREATE INDEX idx_order_date ON Orders(OrderDate);",
+    "explanation": "Creates an index to optimize queries utilizing WHERE OrderDate BETWEEN or ORDER BY OrderDate."
   },
   {
     "id": 376,
     "section": "Normalization & Indexing",
-    "question": "Question 376: Solve SQL puzzle for Normalization & Indexing scenario #376.",
+    "question": "Explain the write overhead associated with database indexes during INSERT, UPDATE, and DELETE statements.",
     "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 376\nSELECT * FROM Employees WHERE DepartmentID = 2;",
-    "explanation": "Explanation 376: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "answer": "-- Concept Explanation:\n-- Every index created on a table must be updated whenever rows are inserted, deleted,\n-- or when indexed columns are updated. This causes extra disk I/O, node splits in\n-- B-Trees, and slows down write-heavy database workloads.",
+    "explanation": "Indexes improve select performance but introduce a write penalty because the index structure must be modified synchronously."
   },
   {
     "id": 377,
     "section": "Normalization & Indexing",
-    "question": "Question 377: Solve SQL puzzle for Normalization & Indexing scenario #377.",
-    "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 377\nSELECT * FROM Employees WHERE DepartmentID = 3;",
-    "explanation": "Explanation 377: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a composite index named idx_emp_mgr_status on columns ManagerID and Status of the Employees table.",
+    "difficulty": "Intermediate",
+    "answer": "CREATE INDEX idx_emp_mgr_status ON Employees(ManagerID, Status);",
+    "explanation": "Indexes the manager and active status columns to optimize corporate hierarchy filtering queries."
   },
   {
     "id": 378,
     "section": "Normalization & Indexing",
-    "question": "Question 378: Solve SQL puzzle for Normalization & Indexing scenario #378.",
-    "difficulty": "Easy",
-    "answer": "-- SQL Answer for Question 378\nSELECT * FROM Employees WHERE DepartmentID = 4;",
-    "explanation": "Explanation 378: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Explain the concept of a Covering Index and how it improves performance by eliminating the table lookup phase.",
+    "difficulty": "Hard",
+    "answer": "-- Concept Explanation:\n-- A Covering Index is an index that contains all the columns referenced in the SELECT,\n-- WHERE, and JOIN clauses of a query. The database engine can satisfy the query entirely\n-- from the index without reading the actual table data blocks.",
+    "explanation": "Covering indexes allow index-only scans, avoiding costly table lookups and accelerating query execution."
   },
   {
     "id": 379,
     "section": "Normalization & Indexing",
-    "question": "Question 379: Solve SQL puzzle for Normalization & Indexing scenario #379.",
-    "difficulty": "Intermediate",
-    "answer": "-- SQL Answer for Question 379\nSELECT * FROM Employees WHERE DepartmentID = 5;",
-    "explanation": "Explanation 379: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "question": "Create a unique index named idx_dept_name_uniq on the DepartmentName column of the Departments table.",
+    "difficulty": "Easy",
+    "answer": "CREATE UNIQUE INDEX idx_dept_name_uniq ON Departments(DepartmentName);",
+    "explanation": "Ensures department names are unique by creating a unique index on that column."
   },
   {
     "id": 380,
     "section": "Normalization & Indexing",
-    "question": "Question 380: Solve SQL puzzle for Normalization & Indexing scenario #380.",
+    "question": "Explain how index selectivity influences the database query optimizer's decision to perform an index scan vs a full table scan.",
     "difficulty": "Hard",
-    "answer": "-- SQL Answer for Question 380\nSELECT * FROM Employees WHERE DepartmentID = 1;",
-    "explanation": "Explanation 380: This retrieves rows filtered by a dynamic identifier matching this SQL practice scenario."
+    "answer": "-- Concept Explanation:\n-- Selectivity = Number of unique values / Total number of rows.\n-- High selectivity (e.g., primary key) makes indexes highly efficient.\n-- Low selectivity (e.g., Gender column) causes the optimizer to bypass the index\n-- and perform a Full Table Scan to avoid double-reading rows.",
+    "explanation": "Query optimizers avoid indexing low-selectivity columns because scanning the index and then fetching rows is slower than a direct table scan."
   },
   {
     "id": 381,

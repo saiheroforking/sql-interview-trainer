@@ -4,8 +4,38 @@ const path = require('path');
 // Setup base categories and questions
 const questions = [];
 
+// Load existing questions to preserve custom-written scenario questions
+const existingQuestionsMap = {};
+const existingQuestionsPath = path.join(__dirname, 'questions.json');
+if (fs.existsSync(existingQuestionsPath)) {
+  try {
+    const existing = JSON.parse(fs.readFileSync(existingQuestionsPath, 'utf8'));
+    existing.forEach(q => {
+      existingQuestionsMap[q.id] = q;
+    });
+  } catch (err) {
+    console.warn("Could not parse existing questions.json, starting fresh:", err.message);
+  }
+}
+
+function isPlaceholder(q) {
+  if (!q || !q.question) return true;
+  const txt = q.question;
+  return txt.includes("Solve SQL puzzle for") ||
+         txt.includes("scenario #") ||
+         txt.startsWith("Find matches for Join scenario") ||
+         txt.startsWith("Find items matching Subquery scenario") ||
+         txt.startsWith("Compute analytical partition statistics for Window scenario") ||
+         txt.startsWith("Validate rules for Trigger scenario");
+}
+
 // Helper to add question
 function addQ(id, section, question, difficulty, answer, explanation) {
+  const existing = existingQuestionsMap[id];
+  if (existing && !isPlaceholder(existing)) {
+    questions.push(existing);
+    return;
+  }
   questions.push({
     id,
     section,
@@ -15,6 +45,7 @@ function addQ(id, section, question, difficulty, answer, explanation) {
     explanation: explanation || `Explanation for Question ${id}: This query retrieves the required columns from the respective tables.`
   });
 }
+
 
 // ----------------------------------------------------
 // SECTION A: JOINS (1-80)
@@ -781,6 +812,14 @@ for (let i = 1; i <= 500; i++) {
   }
 }
 
+// Preserve any extra/bonus questions from the existing questions file (e.g. IDs > 500)
+Object.keys(existingQuestionsMap).forEach(idStr => {
+  const id = parseInt(idStr);
+  if (!questions.find(q => q.id === id)) {
+    questions.push(existingQuestionsMap[id]);
+  }
+});
+
 // Sort questions by ID
 questions.sort((a, b) => a.id - b.id);
 
@@ -788,3 +827,4 @@ questions.sort((a, b) => a.id - b.id);
 const outputFilePath = path.join(__dirname, 'questions.json');
 fs.writeFileSync(outputFilePath, JSON.stringify(questions, null, 2), 'utf-8');
 console.log(`Successfully generated ${questions.length} questions inside questions.json.`);
+
