@@ -1657,6 +1657,13 @@ body {
   border: 1px solid var(--border-light);
   border-radius: 12px;
   padding: 1.5rem;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.admin-card:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
 }
 
 .admin-card h3 {
@@ -2179,13 +2186,14 @@ body {
   padding: 12px 16px;
   border-radius: 8px;
   margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 0.85rem;
   border: 1px solid transparent;
   line-height: 1.4;
+  animation: slideDownFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .db-status-banner.persistent {
@@ -2194,17 +2202,51 @@ body {
   color: var(--color-primary);
 }
 
+.db-status-banner.persistent i {
+  color: var(--color-primary);
+  animation: iconPulseGreen 2.5s infinite ease-in-out;
+}
+
 .db-status-banner.ephemeral {
   background: rgba(235, 87, 87, 0.08);
   border-color: rgba(235, 87, 87, 0.25);
   color: #eb5757;
 }
 
+.db-status-banner.ephemeral i {
+  color: #eb5757;
+  animation: iconPulseRed 2.5s infinite ease-in-out;
+}
+
 .db-status-banner i {
   font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 .db-status-banner.hidden {
   display: none !important;
+}
+
+@keyframes slideDownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iconPulseGreen {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(62, 207, 142, 0)); }
+  50% { transform: scale(1.12); filter: drop-shadow(0 0 4px rgba(62, 207, 142, 0.4)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(62, 207, 142, 0)); }
+}
+
+@keyframes iconPulseRed {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(235, 87, 87, 0)); }
+  50% { transform: scale(1.12); filter: drop-shadow(0 0 4px rgba(235, 87, 87, 0.4)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(235, 87, 87, 0)); }
 }
 
