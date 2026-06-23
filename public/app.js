@@ -2322,6 +2322,16 @@ window.logoutUserAction = function(showMsg = true, clearProgress = true) {
   }
   activeTicks = 0;
 
+  // Notify server of logout to close the active session
+  if (state.token && state.role !== 'guest') {
+    fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`
+      }
+    }).catch(err => console.warn('Server logout notification failed:', err));
+  }
+
   state.token = null;
   state.username = null;
   state.role = 'guest';
@@ -3275,6 +3285,59 @@ window.viewUserDetails = function(username) {
       `;
       bookmarksList.appendChild(item);
     });
+  }
+
+  // Build Sessions list
+  const sessionsList = document.getElementById('modal-details-sessions-list');
+  if (sessionsList) {
+    sessionsList.innerHTML = '';
+    const sessions = user.sessions || [];
+    if (sessions.length === 0) {
+      sessionsList.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align: center; padding: 15px; color: var(--text-muted); font-style: italic; font-size: 0.8rem;">No practice sessions logged yet.</td>
+        </tr>
+      `;
+    } else {
+      const formatSessionTime = (isoStr) => {
+        if (!isoStr) return '--';
+        const date = new Date(isoStr);
+        if (isNaN(date.getTime())) return isoStr;
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        const ss = String(date.getSeconds()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+      };
+
+      // Sort: latest session first
+      const sortedSessions = [...sessions].reverse();
+      sortedSessions.forEach(session => {
+        const startStr = formatSessionTime(session.loginTime);
+        const endStr = session.closed 
+          ? formatSessionTime(session.logoutTime) 
+          : `<span class="badge" style="background: rgba(62, 207, 142, 0.15); color: var(--color-primary); font-size: 0.7rem; border: 1px solid rgba(62, 207, 142, 0.25);">Active Now</span>`;
+        
+        const startMs = new Date(session.loginTime).getTime();
+        const endMs = session.closed ? new Date(session.logoutTime).getTime() : Date.now();
+        const durationSecs = Math.max(0, Math.floor((endMs - startMs) / 1000));
+        const durationStr = formatDuration(durationSecs);
+        
+        const solvedCount = session.solvedCount || 0;
+
+        const tr = document.createElement('tr');
+        tr.style.cssText = 'border-bottom: 1px solid rgba(255,255,255,0.03); height: 2.2rem;';
+        tr.innerHTML = `
+          <td style="padding: 0.35rem 0.5rem; white-space: nowrap;">${startStr}</td>
+          <td style="padding: 0.35rem 0.5rem; white-space: nowrap;">${endStr}</td>
+          <td style="padding: 0.35rem 0.5rem; white-space: nowrap;">${durationStr}</td>
+          <td style="padding: 0.35rem 0.5rem; text-align: center; font-weight: 700; color: ${solvedCount > 0 ? 'var(--color-primary)' : 'var(--text-muted)'};">${solvedCount}</td>
+        `;
+        sessionsList.appendChild(tr);
+      });
+    }
   }
 
   document.getElementById('admin-user-details-modal').classList.remove('hidden');

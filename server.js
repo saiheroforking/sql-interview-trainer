@@ -27,6 +27,37 @@ function generateSalt() {
   return crypto.randomBytes(16).toString('hex');
 }
 
+function startUserSession(user) {
+  if (!user.sessions) {
+    user.sessions = [];
+  }
+  
+  // Close any open sessions
+  user.sessions.forEach(s => {
+    if (s.closed !== true) {
+      s.closed = true;
+      s.logoutTime = s.logoutTime || new Date().toISOString();
+    }
+  });
+
+  // Create new session
+  const newSession = {
+    sessionId: Date.now().toString(),
+    loginTime: new Date().toISOString(),
+    logoutTime: new Date().toISOString(),
+    initialSolved: [...(user.mastered || [])],
+    solvedCount: 0,
+    closed: false
+  };
+
+  user.sessions.push(newSession);
+
+  // Cap at 50 sessions to manage space
+  if (user.sessions.length > 50) {
+    user.sessions.shift();
+  }
+}
+
 // In-memory cache fallbacks for serverless environments
 let inMemoryQuestions = null;
 let inMemoryUsers = null;
@@ -243,6 +274,8 @@ app.post('/api/auth/signup', async (req, res) => {
     timeSpent: 0
   };
 
+  startUserSession(newUser);
+
   users.push(newUser);
   if (await writeUsers(users)) {
     const token = jwt.sign({ username: cleanUsername, role: 'user' }, SECRET_KEY, { expiresIn: '12h' });
@@ -280,6 +313,9 @@ app.post('/api/auth/login', async (req, res) => {
 
   const calculatedHash = hashPassword(password, user.salt);
   if (calculatedHash === user.hash) {
+    startUserSession(user);
+    await writeUsers(users);
+
     const token = jwt.sign({ username: user.username, role: user.role }, SECRET_KEY, { expiresIn: '12h' });
     res.json({ 
       success: true, 
@@ -338,11 +374,25 @@ app.post('/api/user/progress', authenticateToken, async (req, res) => {
     return res.status(404).json({ error: 'User profile not found.' });
   }
 
-  users[index].bookmarks = bookmarks;
-  users[index].mastered = mastered;
-  users[index].review = review;
+  const user = users[index];
+  user.bookmarks = bookmarks;
+  user.mastered = mastered;
+  user.review = review;
   if (typeof timeSpent === 'number') {
-    users[index].timeSpent = timeSpent;
+    user.timeSpent = timeSpent;
+  }
+
+  if (!user.sessions) {
+    user.sessions = [];
+  }
+  if (user.sessions.length > 0) {
+    const activeSession = user.sessions[user.sessions.length - 1];
+    if (activeSession && activeSession.closed !== true) {
+      activeSession.logoutTime = new Date().toISOString();
+      const initialSet = new Set(activeSession.initialSolved || []);
+      const currentlySolved = mastered.filter(id => !initialSet.has(id));
+      activeSession.solvedCount = currentlySolved.length;
+    }
   }
 
   if (await writeUsers(users)) {
@@ -350,6 +400,29 @@ app.post('/api/user/progress', authenticateToken, async (req, res) => {
   } else {
     res.status(500).json({ error: 'Failed to save progress on the server.' });
   }
+});
+
+// ----------------------------------------------------
+// USER LOGOUT ENDPOINT (EXPLICIT SESSION CLOSE)
+// ----------------------------------------------------
+app.post('/api/auth/logout', authenticateToken, async (req, res) => {
+  const users = await readUsers();
+  const user = users.find(u => u.username.toLowerCase() === req.user.username.toLowerCase());
+  
+  if (user) {
+    if (!user.sessions) {
+      user.sessions = [];
+    }
+    if (user.sessions.length > 0) {
+      const activeSession = user.sessions[user.sessions.length - 1];
+      if (activeSession && activeSession.closed !== true) {
+        activeSession.closed = true;
+        activeSession.logoutTime = new Date().toISOString();
+      }
+    }
+    await writeUsers(users);
+  }
+  res.json({ success: true });
 });
 
 // ----------------------------------------------------
@@ -369,7 +442,8 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
     timeSpent: u.timeSpent || 0,
     bookmarks: u.bookmarks || [],
     mastered: u.mastered || [],
-    review: u.review || []
+    review: u.review || [],
+    sessions: u.sessions || []
   }));
   res.json(usersData);
 });

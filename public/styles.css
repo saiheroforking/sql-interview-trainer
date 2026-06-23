@@ -2149,3 +2149,29 @@ body {
   max-height: 80vh;
 }
 
+.sessions-section table tr {
+  transition: background-color 0.2s ease;
+}
+
+.sessions-section table tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.sessions-section .table-container::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.sessions-section .table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sessions-section .table-container::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}
+
+.sessions-section .table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
