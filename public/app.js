@@ -423,7 +423,7 @@ function seedSQLiteDatabase() {
   const db = state.db;
   if (!db) return;
   
-  db.run(`
+  let schemaSql = `
     CREATE TABLE Departments (
       DepartmentID INTEGER PRIMARY KEY,
       DepartmentName VARCHAR(50),
@@ -738,7 +738,12 @@ function seedSQLiteDatabase() {
       VendorID INTEGER PRIMARY KEY,
       VendorName VARCHAR(100)
     );
-  `);
+  `;
+
+  schemaSql = schemaSql.replace(/\b(VARCHAR\(\d+\)|CHAR\(\d+\))(?!\s+COLLATE)/gi, '$1 COLLATE NOCASE');
+  schemaSql = schemaSql.replace(/\b(VARCHAR|TEXT|CHAR)\b(?!\s*\()(?!\s+COLLATE)(?!\s+PRIMARY)/gi, '$1 COLLATE NOCASE');
+
+  db.run(schemaSql);
   
   db.run(`
     INSERT INTO Departments VALUES 
@@ -1889,11 +1894,16 @@ function verifyQueryCorrectness(userQuery, referenceQuery) {
     if (userRes.length === 0 && refRes.length === 0) return true;
     if (userRes.length === 0 || refRes.length === 0) return false;
     
-    const userCols = userRes[0].columns.map(c => c.toLowerCase());
-    const refCols = refRes[0].columns.map(c => c.toLowerCase());
+    const userCols = userRes[0].columns.map(c => c.trim().toLowerCase());
+    const refCols = refRes[0].columns.map(c => c.trim().toLowerCase());
     
     // Check columns count
     if (userCols.length !== refCols.length) return false;
+    
+    // Verify that columns match exactly in name (case-insensitively) and order
+    for (let i = 0; i < userCols.length; i++) {
+      if (userCols[i] !== refCols[i]) return false;
+    }
     
     const userValues = userRes[0].values;
     const refValues = refRes[0].values;
@@ -1901,8 +1911,8 @@ function verifyQueryCorrectness(userQuery, referenceQuery) {
     // Check row count
     if (userValues.length !== refValues.length) return false;
     
-    // Compare stringified row values sorted to ignore row order differences
-    const stringifyRow = row => row.map(v => v === null ? 'NULL' : v.toString()).join('|');
+    // Compare stringified row values sorted to ignore row order differences, and case-insensitively
+    const stringifyRow = row => row.map(v => v === null ? 'NULL' : v.toString().toLowerCase().trim()).join('|');
     const userRowsStr = userValues.map(stringifyRow).sort();
     const refRowsStr = refValues.map(stringifyRow).sort();
     
@@ -3261,7 +3271,7 @@ async function fetchAdminUsers() {
       return `
         <tr style="border-bottom: 1px solid var(--border-light); transition: background-color 0.2s;">
           <td style="padding: 12px 10px; font-weight: 600; color: var(--text-main);">${escapeHTML(u.username)}</td>
-          <td style="padding: 12px 10px;">
+          <td style="padding: 12px 10px; text-align: center;">
             <span class="role-badge" style="font-size: 0.75rem; background: ${roleBg}; color: ${roleColor}; font-weight: 600;">
               ${escapeHTML(u.role === 'admin' ? 'Admin' : 'Student')}
             </span>

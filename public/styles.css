@@ -578,12 +578,17 @@ body {
   background-color: var(--bg-input);
   border: 1px solid var(--border-light);
   border-radius: 6px;
-  padding: 0.5rem;
+  padding: 0.5rem 2rem 0.5rem 0.8rem;
   color: var(--text-main);
   font-family: var(--font-sans);
   font-size: 0.85rem;
   cursor: pointer;
   transition: var(--transition-fast);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
 
 .filter-group select:focus {
@@ -1633,6 +1638,13 @@ body {
   gap: 1.5rem;
 }
 
+.admin-control-section-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
 .admin-header-actions {
   display: flex;
   justify-content: space-between;
@@ -1704,10 +1716,16 @@ body {
   background-color: var(--bg-input);
   border: 1px solid var(--border-light);
   border-radius: 6px;
-  padding: 0.6rem;
+  padding: 0.6rem 2rem 0.6rem 0.8rem;
   color: white;
   font-family: var(--font-sans);
   font-size: 0.85rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
 
 .form-group-custom textarea:focus, .form-group-custom select:focus {
@@ -2248,5 +2266,22 @@ body {
   0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(235, 87, 87, 0)); }
   50% { transform: scale(1.12); filter: drop-shadow(0 0 4px rgba(235, 87, 87, 0.4)); }
   100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(235, 87, 87, 0)); }
+}
+
+/* Responsive layout adjustments for the admin dashboard */
+@media (max-width: 1024px) {
+  .admin-main-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .admin-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .backup-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 

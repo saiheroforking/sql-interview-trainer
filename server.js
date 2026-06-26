@@ -1,6 +1,30 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
+// Load environment variables from .env.local if present
+try {
+  const envPath = path.join(__dirname, '.env.local');
+  if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, 'utf8');
+    envConfig.split(/\r?\n/).forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const parts = trimmed.split('=');
+        if (parts.length >= 2) {
+          const key = parts[0].trim();
+          let val = parts.slice(1).join('=').trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          process.env[key] = val;
+        }
+      }
+    });
+  }
+} catch (e) {
+  console.warn('Failed to load local .env.local file:', e.message);
+}
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
